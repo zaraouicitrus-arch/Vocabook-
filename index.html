@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#000010"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>VocaBook – Lecture pour tous</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --bg:#000010;--surface:#05051a;--card:#0a0a25;
+    --cyan:#00e5ff;--cyan2:#00b4cc;--cyan-glow:rgba(0,229,255,0.15);
+    --gold:#c8a96e;--gold2:#e8cc9a;
+    --text:#e8f4ff;--dim:#4a6080;--red:#ff4466;
+    --green:#00ff88;
+  }
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;overflow-x:hidden;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;flex-direction:column;align-items:center;padding:0 0 32px;}
+.screen.active{display:flex;}
+
+/* ── STARS BG ── */
+#stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+.star{position:absolute;border-radius:50%;background:white;animation:twinkle 3s infinite;}
+@keyframes twinkle{0%,100%{opacity:0.2;}50%{opacity:1;}}
+
+/* ── HEADER ── */
+.header{width:100%;background:rgba(0,0,16,0.95);border-bottom:1px solid rgba(0,229,255,0.2);padding:16px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);}
+.header h1{font-size:20px;letter-spacing:4px;color:var(–cyan);text-transform:uppercase;font-weight:300;flex:1;}
+.back-btn{background:transparent;border:1px solid rgba(0,229,255,0.3);color:var(–cyan);font-size:20px;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* ── HOME ── */
+#home{background:var(–bg);justify-content:flex-start;padding-top:0;}
+.home-hero{width:100%;padding:32px 20px 24px;text-align:center;position:relative;z-index:1;}
+.logo-icon{font-size:60px;filter:drop-shadow(0 0 30px var(–cyan));animation:float 4s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.logo-title{font-size:38px;letter-spacing:10px;color:var(–cyan);text-transform:uppercase;font-weight:100;margin:12px 0 4px;}
+.logo-sub{font-size:12px;color:var(–dim);letter-spacing:4px;text-transform:uppercase;}
+
+/* ── MIC BUTTON ── */
+.mic-zone{position:relative;z-index:1;margin:28px 0 16px;}
+.mic-btn{
+width:170px;height:170px;border-radius:50%;border:none;cursor:pointer;
+background:radial-gradient(circle at 38% 32%, #00e5ff, #003366);
+display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+color:#000010;font-size:52px;
+box-shadow:0 0 0 0 rgba(0,229,255,0.4), 0 0 60px rgba(0,229,255,0.3), inset 0 0 30px rgba(255,255,255,0.1);
+transition:all 0.3s;
+animation:breathe 3s ease-in-out infinite;
+}
+.mic-btn.listening{
+background:radial-gradient(circle at 38% 32%, #ff4466, #660022);
+box-shadow:0 0 0 20px rgba(255,68,102,0.15), 0 0 80px rgba(255,68,102,0.5);
+animation:pulse-red 0.7s ease-in-out infinite;
+}
+.mic-btn span.label{font-size:13px;font-weight:700;letter-spacing:3px;color:#000010;font-family:‘Segoe UI’,Arial,sans-serif;}
+@keyframes breathe{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,229,255,0.4),0 0 60px rgba(0,229,255,0.3);}50%{transform:scale(1.04);box-shadow:0 0 0 12px rgba(0,229,255,0.1),0 0 80px rgba(0,229,255,0.5);}}
+@keyframes pulse-red{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
+
+.mic-status{font-size:15px;color:var(–cyan);font-style:italic;min-height:22px;text-align:center;padding:0 20px;}
+
+/* ── CATEGORY GRID ── */
+.section-label{font-size:11px;color:var(–dim);letter-spacing:4px;text-transform:uppercase;margin:20px 0 12px;text-align:center;width:100%;padding:0 20px;}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;padding:0 16px;z-index:1;}
+.cat-btn{
+background:var(–card);border:1px solid rgba(0,229,255,0.15);border-radius:20px;
+padding:20px 14px;cursor:pointer;color:var(–text);
+display:flex;align-items:center;gap:12px;
+font-family:‘Segoe UI’,Arial,sans-serif;font-size:15px;font-weight:600;
+transition:all 0.2s;position:relative;overflow:hidden;
+}
+.cat-btn::before{content:’’;position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,229,255,0.05),transparent);opacity:0;transition:opacity 0.2s;}
+.cat-btn:active{border-color:var(–cyan);transform:scale(0.97);}
+.cat-btn:active::before{opacity:1;}
+.cat-icon{font-size:30px;flex-shrink:0;}
+
+/* ── BOTTOM ACTIONS ── */
+.bottom-actions{display:flex;gap:12px;padding:20px 16px 0;width:100%;z-index:1;}
+.action-btn{flex:1;background:var(–card);border:1px solid rgba(0,229,255,0.2);border-radius:18px;padding:16px 12px;cursor:pointer;color:var(–cyan);font-family:‘Segoe UI’,Arial,sans-serif;font-size:14px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all 0.2s;}
+.action-btn .icon{font-size:26px;}
+.action-btn:active{background:rgba(0,229,255,0.1);transform:scale(0.97);}
+
+/* ── LIBRARY ── */
+.lib-content{width:100%;max-width:640px;padding:16px;flex:1;}
+.book-card{
+background:var(–card);border:1px solid rgba(0,229,255,0.12);border-radius:20px;
+padding:18px;display:flex;align-items:center;gap:16px;
+cursor:pointer;width:100%;font-family:‘Segoe UI’,Arial,sans-serif;
+color:var(–text);text-align:left;margin-bottom:12px;
+transition:all 0.2s;position:relative;overflow:hidden;
+}
+.book-card::after{content:‘▶’;position:absolute;right:18px;font-size:18px;color:rgba(0,229,255,0.4);}
+.book-card:active{border-color:var(–cyan);transform:scale(0.98);}
+.book-num{width:44px;height:44px;border-radius:50%;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:var(–cyan);}
+.book-info{flex:1;min-width:0;padding-right:24px;}
+.book-title{font-size:16px;font-weight:700;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.book-author{font-size:13px;color:var(–dim);font-style:italic;}
+
+.loading-box{text-align:center;padding:60px 20px;}
+.loading-icon{font-size:50px;animation:spin 2s linear infinite;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+/* ── READER ── */
+#reader{justify-content:flex-start;}
+.reader-content{flex:1;overflow-y:auto;padding:20px;max-width:640px;width:100%;}
+.reader-text{font-size:17px;line-height:2.4;color:var(–text);}
+.word{transition:background 0.06s;border-radius:4px;padding:0 1px;}
+.word.active{background:var(–cyan);color:#000010;font-weight:700;}
+.word.done{color:var(–dim);}
+.progress-bar{height:4px;background:rgba(0,229,255,0.1);}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(–cyan),var(–gold));transition:width 0.3s;}
+
+/* ── CONTROLS ── */
+.controls{background:rgba(0,0,16,0.97);border-top:1px solid rgba(0,229,255,0.15);padding:20px 20px 32px;width:100%;backdrop-filter:blur(12px);}
+.speed-row{display:flex;justify-content:center;gap:8px;margin-bottom:20px;}
+.speed-btn{background:var(–card);border:1px solid rgba(0,229,255,0.15);border-radius:20px;padding:8px 18px;font-size:13px;cursor:pointer;color:var(–dim);font-family:‘Segoe UI’,Arial,sans-serif;transition:all 0.2s;}
+.speed-btn.active{background:rgba(0,229,255,0.15);border-color:var(–cyan);color:var(–cyan);}
+.main-controls{display:flex;justify-content:center;align-items:center;gap:20px;margin-bottom:16px;}
+.ctrl-btn{background:var(–card);border:1px solid rgba(0,229,255,0.2);border-radius:50%;width:60px;height:60px;font-size:24px;cursor:pointer;color:var(–text);display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.ctrl-btn:active{transform:scale(0.93);}
+.play-btn{
+width:100px;height:100px;font-size:40px;
+background:radial-gradient(circle at 38% 32%, var(–gold2), #8a5c20);
+border:none;color:#000010;
+box-shadow:0 0 40px rgba(200,169,110,0.4);
+}
+.play-btn.playing{
+background:radial-gradient(circle at 38% 32%, #00e5ff, #003366);
+color:#000010;
+box-shadow:0 0 50px rgba(0,229,255,0.5);
+}
+.reader-status{text-align:center;font-size:13px;color:var(–dim);font-style:italic;}
+
+/* ── AI SCREEN ── */
+#ai-screen{justify-content:flex-start;}
+.ai-messages{flex:1;overflow-y:auto;padding:16px;width:100%;max-width:640px;}
+.ai-msg{margin-bottom:16px;display:flex;gap:10px;align-items:flex-start;}
+.ai-msg.user{flex-direction:row-reverse;}
+.ai-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.ai-avatar.bot{background:rgba(0,229,255,0.15);border:1px solid rgba(0,229,255,0.3);}
+.ai-avatar.user{background:rgba(200,169,110,0.15);border:1px solid rgba(200,169,110,0.3);}
+.ai-bubble{max-width:78%;padding:12px 16px;border-radius:18px;font-size:15px;line-height:1.6;}
+.ai-bubble.bot{background:var(–card);border:1px solid rgba(0,229,255,0.15);border-radius:4px 18px 18px 18px;}
+.ai-bubble.user{background:rgba(200,169,110,0.12);border:1px solid rgba(200,169,110,0.2);border-radius:18px 4px 18px 18px;color:var(–gold2);}
+.ai-input-zone{padding:16px;width:100%;max-width:640px;display:flex;gap:12px;align-items:center;background:rgba(0,0,16,0.97);border-top:1px solid rgba(0,229,255,0.15);}
+.ai-speak-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:28px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;flex-shrink:0;}
+.ai-speak-btn.idle{background:radial-gradient(circle at 38% 32%,var(–cyan),#003366);color:#000010;box-shadow:0 0 20px rgba(0,229,255,0.3);}
+.ai-speak-btn.listening{background:radial-gradient(circle at 38% 32%,var(–red),#660022);color:white;animation:pulse-red 0.7s infinite;}
+.ai-hint{flex:1;font-size:13px;color:var(–dim);font-style:italic;line-height:1.5;}
+
+/* ── QR SCREEN ── */
+#qr-screen{justify-content:center;align-items:center;padding:32px 20px;}
+.qr-card{background:var(–card);border:1px solid rgba(0,229,255,0.2);border-radius:28px;padding:32px;text-align:center;width:100%;max-width:360px;}
+.qr-title{font-size:22px;color:var(–cyan);letter-spacing:3px;text-transform:uppercase;font-weight:300;margin-bottom:6px;}
+.qr-sub{font-size:13px;color:var(–dim);margin-bottom:24px;}
+#qrcode{display:flex;justify-content:center;margin-bottom:24px;}
+#qrcode img,#qrcode canvas{border-radius:12px;border:4px solid white;}
+.qr-url{font-size:13px;color:var(–cyan);word-break:break-all;margin-bottom:20px;padding:10px;background:rgba(0,229,255,0.05);border-radius:10px;border:1px solid rgba(0,229,255,0.15);}
+.qr-desc{font-size:14px;color:var(–dim);line-height:1.7;}
+
+/* ── ARIA STATUS ── */
+#aria-live{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
+
+/* ── GLOW RING ── */
+.glow-ring{position:fixed;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,0.04) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:0;}
+</style>
+
+</head>
+<body>
+
+<div aria-live="assertive" aria-atomic="true" id="aria-live"></div>
+<div class="glow-ring"></div>
+<div id="stars"></div>
+
+<!-- ══════════════ HOME ══════════════ -->
+
+<section id="home" class="screen active" aria-label="Accueil VocaBook">
+
+  <div class="home-hero">
+    <div class="logo-icon" aria-hidden="true">📖</div>
+    <h1 class="logo-title">VocaBook</h1>
+    <p class="logo-sub">La bibliothèque qui vous parle</p>
+  </div>
+
+  <!-- BOUTON MICRO PRINCIPAL -->
+
+  <div class="mic-zone">
+    <button class="mic-btn" id="home-mic" onclick="startHomeVoice()"
+      aria-label="Appuyez et parlez pour chercher un livre">
+      <span aria-hidden="true">🎙</span>
+      <span class="label" aria-hidden="true">PARLER</span>
+    </button>
+  </div>
+  <p class="mic-status" id="home-status" aria-live="polite">Appuyez et dites le nom d'un livre ou d'un auteur</p>
+
+  <p class="section-label">— Choisissez une catégorie —</p>
+
+  <div class="cat-grid" role="list" aria-label="Catégories de livres">
+    <button class="cat-btn" role="listitem" onclick="browseCategory('roman')" aria-label="Catégorie Romans">
+      <span class="cat-icon">📖</span><span>Romans</span>
+    </button>
+    <button class="cat-btn" role="listitem" onclick="browseCategory('aventure')" aria-label="Catégorie Aventure">
+      <span class="cat-icon">⚔️</span><span>Aventure</span>
+    </button>
+    <button class="cat-btn" role="listitem" onclick="browseCategory('policier')" aria-label="Catégorie Policier">
+      <span class="cat-icon">🔍</span><span>Policier</span>
+    </button>
+    <button class="cat-btn" role="listitem" onclick="browseCategory('philosophie')" aria-label="Catégorie Philosophie">
+      <span class="cat-icon">🧠</span><span>Philosophie</span>
+    </button>
+    <button class="cat-btn" role="listitem" onclick="browseCategory('poesie')" aria-label="Catégorie Poésie">
+      <span class="cat-icon">🌸</span><span>Poésie</span>
+    </button>
+    <button class="cat-btn" role="listitem" onclick="browseCategory('histoire')" aria-label="Catégorie Histoire">
+      <span class="cat-icon">🏛️</span><span>Histoire</span>
+    </button>
+  </div>
+
+  <div class="bottom-actions">
+    <button class="action-btn" onclick="showScreen('ai-screen'); greetAI();" aria-label="Assistant IA vocal">
+      <span class="icon" aria-hidden="true">🤖</span>
+      <span>Assistant IA</span>
+    </button>
+    <button class="action-btn" onclick="showScreen('qr-screen');" aria-label="QR Code accès">
+      <span class="icon" aria-hidden="true">📱</span>
+      <span>QR Code</span>
+    </button>
+  </div>
+</section>
+
+<!-- ══════════════ LIBRARY ══════════════ -->
+
+<section id="library" class="screen" aria-label="Bibliothèque de livres">
+  <header class="header">
+    <button class="back-btn" onclick="goHome()" aria-label="Retour à l'accueil">←</button>
+    <h1 id="lib-title">Bibliothèque</h1>
+    <button class="back-btn" onclick="startHomeVoiceInLib()" aria-label="Nouvelle recherche vocale" style="font-size:18px;">🎙</button>
+  </header>
+  <div class="lib-content" id="lib-content" role="list" aria-label="Liste des livres"></div>
+</section>
+
+<!-- ══════════════ READER ══════════════ -->
+
+<section id="reader" class="screen" aria-label="Lecteur de livre">
+  <header class="header">
+    <button class="back-btn" onclick="goLib()" aria-label="Retour à la liste">←</button>
+    <h1 id="reader-title">Lecture</h1>
+  </header>
+  <div class="progress-bar" role="progressbar" aria-label="Progression" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progress-bar">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+  <div class="reader-content">
+    <div class="reader-text" id="reader-text" aria-label="Texte du livre"></div>
+  </div>
+  <div class="controls">
+    <div class="speed-row" role="group" aria-label="Vitesse de lecture">
+      <button class="speed-btn active" onclick="setSpeed(0.8)" id="spd-0.8">Lent</button>
+      <button class="speed-btn" onclick="setSpeed(1)" id="spd-1">Normal</button>
+      <button class="speed-btn" onclick="setSpeed(1.3)" id="spd-1.3">Rapide</button>
+      <button class="speed-btn" onclick="setSpeed(1.6)" id="spd-1.6">Très rapide</button>
+    </div>
+    <div class="main-controls">
+      <button class="ctrl-btn" onclick="stopRead(); announce('Arrêté.');" aria-label="Arrêter">⏹</button>
+      <button class="ctrl-btn play-btn" id="play-btn" onclick="togglePlay()" aria-label="Lire ou mettre en pause">▶</button>
+      <button class="ctrl-btn" onclick="restartRead();" aria-label="Recommencer">↺</button>
+    </div>
+    <p class="reader-status" id="reader-status" aria-live="polite">Appuyez sur ▶ pour commencer</p>
+  </div>
+</section>
+
+<!-- ══════════════ AI SCREEN ══════════════ -->
+
+<section id="ai-screen" class="screen" aria-label="Assistant IA vocal">
+  <header class="header">
+    <button class="back-btn" onclick="goHome()" aria-label="Retour à l'accueil">←</button>
+    <h1>Assistant IA</h1>
+  </header>
+
+  <!-- Conversation -->
+
+  <div class="ai-messages" id="ai-messages" aria-live="polite" aria-label="Conversation avec l'assistant"></div>
+
+  <!-- Zone micro bien visible -->
+
+  <div style="background:rgba(0,0,16,0.97);border-top:1px solid rgba(0,229,255,0.2);padding:24px 20px 36px;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;">
+    <p id="ai-hint" style="font-size:15px;color:var(--cyan);font-style:italic;text-align:center;min-height:22px;">Appuyez sur le bouton et posez votre question</p>
+
+```
+<button id="ai-mic" onclick="startAIVoice()"
+  aria-label="Appuyez pour parler à l'assistant"
+  style="width:130px;height:130px;border-radius:50%;border:none;cursor:pointer;
+    background:radial-gradient(circle at 38% 32%,#00e5ff,#003366);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    font-size:44px;color:#000010;
+    box-shadow:0 0 0 0 rgba(0,229,255,0.4),0 0 50px rgba(0,229,255,0.35);
+    animation:breathe 3s ease-in-out infinite;transition:all 0.3s;">
+  <span>🎙</span>
+  <span style="font-size:12px;font-weight:700;letter-spacing:2px;font-family:'Segoe UI',Arial,sans-serif;">PARLER</span>
+</button>
+
+<p style="font-size:12px;color:var(--dim);text-align:center;max-width:280px;line-height:1.6;">
+  Exemples : "Recommande-moi un livre", "Qui est Victor Hugo", "Je veux de l'aventure"
+</p>
+```
+
+  </div>
+</section>
+
+<!-- ══════════════ QR SCREEN ══════════════ -->
+
+<section id="qr-screen" class="screen" aria-label="QR Code d'accès">
+  <header class="header" style="width:100%;">
+    <button class="back-btn" onclick="goHome()" aria-label="Retour à l'accueil">←</button>
+    <h1>Accès VocaBook</h1>
+  </header>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;width:100%;">
+    <div class="qr-card">
+      <h2 class="qr-title">VocaBook</h2>
+      <p class="qr-sub">Scannez pour accéder à l'application</p>
+      <div id="qrcode"></div>
+      <p class="qr-url" id="qr-url">payhip.com/Movoyage24</p>
+      <p class="qr-desc">📱 Scannez ce QR Code pour accéder à VocaBook depuis votre téléphone. Partagez-le autour de vous pour aider les personnes malvoyantes.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIG — modifiez cette ligne avec votre vrai lien
+const PAYHIP_URL = "https://payhip.com/Movoyage24";
+const APP_URL = window.location.href;
+// ══════════════════════════════════════════════════
+
+// ── STARS ──
+(function(){
+  const s = document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const d=document.createElement('div');
+    d.className='star';
+    const sz=Math.random()*2+0.5;
+    d.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*3}s;`;
+    s.appendChild(d);
+  }
+})();
+
+// ── SPEECH ──
+let currentVoice = null;
+const synth = window.speechSynthesis;
+
+function loadVoices(){
+  const vs = synth.getVoices();
+  currentVoice = vs.find(v=>v.lang.startsWith('fr')) || vs[0] || null;
+}
+loadVoices();
+synth.onvoiceschanged = loadVoices;
+
+function announce(text, rate=1, onEnd=null){
+  document.getElementById('aria-live').textContent = text;
+  synth.cancel();
+  if(!text) return;
+  const u = new SpeechSynthesisUtterance(text);
+  if(currentVoice) u.voice = currentVoice;
+  u.rate = rate;
+  u.lang = currentVoice?.lang || 'fr-FR';
+  if(onEnd) u.onend = onEnd;
+  synth.speak(u);
+}
+
+// ── SCREENS ──
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goHome(){ synth.cancel(); showScreen('home'); announce('Accueil.'); }
+function goLib(){ stopRead(); showScreen('library'); announce('Liste des livres.'); }
+
+// ── QR CODE ──
+window.addEventListener('load', function(){
+  setTimeout(()=>{
+    try{
+      new QRCode(document.getElementById('qrcode'),{
+        text: PAYHIP_URL,
+        width:200, height:200,
+        colorDark:'#000010', colorLight:'#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      document.getElementById('qr-url').textContent = PAYHIP_URL;
+    } catch(e){}
+  },500);
+
+  // Greeting
+  setTimeout(()=>{
+    announce('Bienvenue sur VocaBook. Votre bibliothèque audio intelligente. Appuyez sur le grand bouton pour chercher un livre à la voix, ou choisissez une catégorie.');
+  }, 800);
+});
+
+// ── VOICE SEARCH ──
+let recognition = null;
+
+function buildRecognition(lang, onResult, onError){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return null;
+  const r = new SR();
+  r.lang = lang || 'fr-FR';
+  r.interimResults = false;
+  r.maxAlternatives = 1;
+  r.onresult = e => onResult(e.results[0][0].transcript);
+  r.onerror = () => onError && onError();
+  return r;
+}
+
+function startHomeVoice(){
+  synth.cancel();
+  const btn = document.getElementById('home-mic');
+  const status = document.getElementById('home-status');
+  btn.classList.add('listening');
+  btn.querySelector('.label').textContent = 'ÉCOUTE…';
+  status.textContent = '🔴 Je vous écoute…';
+
+  const rec = buildRecognition('fr-FR', query => {
+    btn.classList.remove('listening');
+    btn.querySelector('.label').textContent = 'PARLER';
+    status.textContent = `Recherche : "${query}"`;
+    announce(`Recherche : ${query}`);
+    fetchBooks(query, null);
+  }, () => {
+    btn.classList.remove('listening');
+    btn.querySelector('.label').textContent = 'PARLER';
+    status.textContent = 'Je n\'ai pas compris. Réessayez.';
+    announce('Je n\'ai pas compris. Réessayez.');
+  });
+
+  if(!rec){ announce('Recherche vocale non disponible. Choisissez une catégorie.'); btn.classList.remove('listening'); return; }
+  rec.start();
+}
+
+function startHomeVoiceInLib(){
+  synth.cancel();
+  announce('Dites le nom d\'un livre ou d\'un auteur.', 1, () => {
+    const rec = buildRecognition('fr-FR', query => {
+      announce(`Recherche : ${query}`);
+      fetchBooks(query, null);
+    }, () => announce('Je n\'ai pas compris.'));
+    if(rec) rec.start();
+  });
+}
+
+// ── FETCH BOOKS ──
+const FALLBACK = [
+  {id:1,title:"Les Misérables",author:"Victor Hugo",text:"Les Misérables, par Victor Hugo. Jean Valjean, ancien forçat condamné pour avoir volé un pain, tente de se reconstruire une vie honnête après avoir été touché par la générosité d'un évêque. Devenu maire et industriel sous le nom de Monsieur Madeleine, il est rattrapé par son passé lorsque l'inspecteur Javert, obsédé par la loi, le reconnaît. Valjean adopte Cosette, une petite orpheline exploitée, et la protège avec tout l'amour paternel dont il est capable. À Paris, les barricades s'élèvent en 1832, et Valjean risque sa vie pour sauver Marius, le jeune amoureux de Cosette. Une fresque humaine sur la rédemption, la justice et l'amour."},
+  {id:2,title:"Le Petit Prince",author:"Antoine de Saint-Exupéry",text:"Le Petit Prince, par Antoine de Saint-Exupéry. Un aviateur en panne dans le désert du Sahara rencontre un mystérieux petit garçon venu d'une petite planète lointaine. Le petit prince lui raconte ses voyages à travers les étoiles, ses rencontres avec des grandes personnes étranges : un roi sans sujets, un vaniteux, un buveur triste, un businessman qui croit posséder les étoiles. Sur Terre, un renard lui enseigne le secret le plus important : on ne voit bien qu'avec le cœur, l'essentiel est invisible pour les yeux. Un conte poétique sur l'amitié, l'amour et le sens de la vie."},
+  {id:3,title:"Candide",author:"Voltaire",text:"Candide ou l'Optimisme, par Voltaire. Candide est un jeune homme naïf qui croit, sous l'influence du philosophe Pangloss, que tout est pour le mieux dans le meilleur des mondes possibles. Chassé de son château pour avoir embrassé la belle Cunégonde, il traverse le monde et accumule les catastrophes : guerres, tremblements de terre, inquisition, esclavage. Chaque nouvelle épreuve met à mal l'optimisme aveugle de son maître. Après mille aventures, Candide retrouve ses compagnons et conclut avec sagesse qu'il faut cultiver notre jardin. Un chef-d'œuvre philosophique du siècle des Lumières."},
+  {id:4,title:"Madame Bovary",author:"Gustave Flaubert",text:"Madame Bovary, par Gustave Flaubert. Emma Rouault, fille de fermier élevée dans un couvent, épouse Charles Bovary, médecin de campagne en Normandie. Mais la vie provinciale l'ennuie profondément. Nourrie de romans romantiques, elle rêve de passions ardentes, de luxe et d'aventures. Elle se lance dans des liaisons amoureuses qui la déçoivent, s'endette pour offrir des cadeaux à ses amants. Lorsque ses dettes deviennent insurmontables et que ses amants l'abandonnent, Emma s'empoisonne à l'arsenic. Un portrait magistral de l'illusion romantique et de la médiocrité bourgeoise au dix-neuvième siècle."},
+  {id:5,title:"Le Comte de Monte-Cristo",author:"Alexandre Dumas",text:"Le Comte de Monte-Cristo, par Alexandre Dumas. Edmond Dantès, jeune marin marseillais plein d'avenir, est sur le point d'épouser sa bien-aimée Mercédès quand des jaloux le dénoncent faussement comme bonapartiste. Emprisonné sans jugement au château d'If, il y passe quatorze longues années. En prison, il rencontre l'abbé Faria qui lui révèle l'existence d'un trésor fabuleux caché sur l'île de Monte-Cristo. Après son évasion miraculeuse, Dantès récupère le trésor et revient à Paris sous l'identité du mystérieux et richissime comte de Monte-Cristo pour assouvir une vengeance méticuleuse contre ceux qui l'ont trahi."},
+  {id:6,title:"Notre-Dame de Paris",author:"Victor Hugo",text:"Notre-Dame de Paris, par Victor Hugo. En 1482, la belle Esmeralda, jeune gitane qui danse sur le parvis de la cathédrale, fait tourner les têtes. Quasimodo, le bossu sourd et défiguré qui sonne les cloches de Notre-Dame, l'aime secrètement et la protège avec une dévotion absolue. L'archidiacre Frollo, dévoré par une passion coupable qu'il ne peut assumer, la fait condamner à mort. Le beau capitaine Phoebus joue avec son cœur sans l'aimer vraiment. Dans un Paris médiéval grouillant de vie, Victor Hugo célèbre la cathédrale gothique et peint une tragédie sur la beauté intérieure face à la monstruosité apparente."},
+  {id:7,title:"Germinal",author:"Émile Zola",text:"Germinal, par Émile Zola. Étienne Lantier, jeune ouvrier sans travail, arrive dans le bassin minier du Nord de la France et descend dans les puits de la mine de Montsou. Il découvre la misère profonde des mineurs : salaires de misère calculés à la tonne, accidents mortels fréquents, enfants envoyés travailler sous terre dès l'âge de dix ans. Révolté par ces injustices, Étienne organise les ouvriers et déclenche une grande grève. La lutte est dure, la faim tenaille les familles, la répression militaire est brutale. La grève échoue. Mais dans cette défaite, des graines de conscience ouvrière sont semées pour les luttes à venir."},
+  {id:8,title:"L'Étranger",author:"Albert Camus",text:"L'Étranger, par Albert Camus. Meursault, employé de bureau à Alger, apprend la mort de sa mère. Il assiste aux funérailles sans pleurer et reprend sa vie normale dès le lendemain, se baignant et allant au cinéma avec Marie. Il se lie avec Raymond, un voisin louche. Sur une plage algérienne, sous un soleil aveuglant qui écrase sa conscience, Meursault tire cinq coups de revolver sur un Arabe. Lors de son procès, c'est son indifférence apparente lors de l'enterrement de sa mère qui est retenu contre lui plus que le meurtre lui-même. Condamné à mort, il refuse les consolations du prêtre et embrasse l'absurdité de l'existence."},
+  {id:9,title:"Les Fleurs du Mal",author:"Charles Baudelaire",text:"Les Fleurs du Mal, par Charles Baudelaire. Recueil de poèmes publié en 1857, censuré et condamné pour immoralité à sa parution. Baudelaire explore les contradictions de l'âme humaine : la beauté et la laideur, le sacré et le profane, l'idéal et le spleen. Il chante Paris, la ville moderne, ses misères et ses splendeurs. Il évoque ses amours torturées pour Jeanne Duval, Madame Sabatier et Marie Daubrun. Entre paradis artificiels et abîmes du désespoir, entre l'élévation vers la beauté pure et la chute dans le vice, Baudelaire invente une poésie nouvelle qui influencera tout le symbolisme et la poésie moderne."},
+  {id:10,title:"Vingt mille lieues sous les mers",author:"Jules Verne",text:"Vingt mille lieues sous les mers, par Jules Verne. En 1866, des marins signalent la présence d'un monstre marin gigantesque dans les océans. Le professeur Aronnax, naturaliste français, part enquêter avec son fidèle domestique Conseil et le harponneur canadien Ned Land. Leur frégate percutée, ils se retrouvent prisonniers du mystérieux Nautilus, sous-marin extraordinaire commandé par le capitaine Nemo, génie solitaire et torturé qui a renoncé au monde des hommes. Pendant dix mois, ils explorent les merveilles des fonds marins, traversent tous les océans du globe, découvrent l'Atlantide engloutie. Une aventure extraordinaire qui a inventé la science-fiction moderne."}
+];
+
+async function fetchBooks(query, topic){
+  showScreen('library');
+  document.getElementById('lib-title').textContent = query ? `"${query}"` : (topic || 'Bibliothèque');
+  const content = document.getElementById('lib-content');
+  content.innerHTML = `<div class="loading-box"><div class="loading-icon">🌀</div><p style="color:var(--dim);margin-top:16px">Recherche en cours…</p></div>`;
+
+  try{
+    let url = `https://gutendex.com/books/?languages=fr,en&page_size=20`;
+    if(query) url += `&search=${encodeURIComponent(query)}`;
+    if(topic) url += `&topic=${encodeURIComponent(topic)}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error();
+    const data = await res.json();
+    const results = (data.results||[]).map(b=>({
+      id:b.id, title:b.title,
+      author:b.authors?.[0]?.name||'Auteur inconnu',
+      formats:b.formats, text:null
+    }));
+    if(results.length===0) throw new Error('empty');
+    renderBooks(results);
+    announce(`${results.length} livres trouvés. Appuyez sur un livre pour l'écouter.`);
+  } catch(e){
+    const q = (query||'').toLowerCase();
+    const filtered = q ? FALLBACK.filter(b=>b.title.toLowerCase().includes(q)||b.author.toLowerCase().includes(q)) : FALLBACK;
+    const res = filtered.length > 0 ? filtered : FALLBACK;
+    renderBooks(res);
+    announce(`${res.length} livres disponibles. Appuyez sur un livre pour l'écouter.`);
+  }
+}
+
+function browseCategory(cat){
+  announce(`Catégorie : ${cat}`);
+  fetchBooks(null, cat);
+}
+
+function renderBooks(books){
+  const content = document.getElementById('lib-content');
+  content.innerHTML = '';
+  books.forEach((b,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'book-card';
+    btn.setAttribute('role','listitem');
+    btn.setAttribute('aria-label',`${b.title} par ${b.author}. Appuyez pour écouter.`);
+    btn.innerHTML = `
+      <div class="book-num">${i+1}</div>
+      <div class="book-info">
+        <div class="book-title">${b.title}</div>
+        <div class="book-author">${b.author}</div>
+      </div>`;
+    btn.onclick = () => openBook(b);
+    content.appendChild(btn);
+  });
+}
+
+// ── READER ──
+let currentBook = null;
+let readWords = [];
+let isPlaying = false;
+let isPaused = false;
+let currentSpeed = 0.8;
+let readUtterance = null;
+
+async function openBook(b){
+  synth.cancel();
+  currentBook = b;
+  showScreen('reader');
+  document.getElementById('reader-title').textContent = b.title;
+  document.getElementById('reader-text').innerHTML = '<div class="loading-box"><div class="loading-icon">📖</div><p style="color:var(--dim);margin-top:16px">Chargement du livre…</p></div>';
+  document.getElementById('reader-status').textContent = 'Chargement…';
+  setProgress(0);
+  isPlaying = false; isPaused = false;
+  updatePlayBtn();
+
+  announce(`Chargement de ${b.title}. Veuillez patienter.`);
+
+  let text = b.text;
+
+  if(!text && b.formats){
+    const formats = b.formats;
+    const url = formats['text/plain; charset=utf-8'] || formats['text/plain; charset=us-ascii'] || formats['text/plain'] || Object.entries(formats).find(([k])=>k.startsWith('text/plain'))?.[1];
+    if(url){
+      try{
+        const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        const r = await fetch(proxy);
+        if(r.ok){
+          let raw = await r.text();
+          const start = raw.indexOf('*** START OF');
+          const end = raw.indexOf('*** END OF');
+          if(start!==-1) raw=raw.slice(raw.indexOf('\n',start)+1);
+          if(end!==-1) raw=raw.slice(0,end);
+          text = raw.replace(/\r\n|\r/g,' ').replace(/\n/g,' ').replace(/\s+/g,' ').slice(0,12000).trim();
+        }
+      } catch(e){}
+    }
+  }
+
+  if(!text){
+    const fb = FALLBACK.find(f=>f.title===b.title);
+    text = fb?.text || `${b.title}, par ${b.author}. Ce livre classique fait partie du domaine public.`;
+  }
+
+  currentBook.text = text;
+  readWords = text.split(/\s+/);
+
+  const container = document.getElementById('reader-text');
+  container.innerHTML = readWords.map((w,i)=>`<span class="word" id="w${i}">${w} </span>`).join('');
+
+  announce(`${b.title} est prêt. Appuyez sur le grand bouton doré pour commencer la lecture.`);
+  document.getElementById('reader-status').textContent = 'Appuyez sur ▶ pour commencer';
+}
+
+function togglePlay(){
+  if(!currentBook?.text) return;
+  if(!isPlaying && !isPaused){ startRead(); }
+  else if(isPlaying && !isPaused){ pauseRead(); }
+  else if(isPaused){ resumeRead(); }
+}
+
+function startRead(){
+  if(!currentBook?.text) return;
+  synth.cancel();
+  const text = currentBook.text;
+  const ws = text.split(/\s+/);
+  const u = new SpeechSynthesisUtterance(text);
+  if(currentVoice) u.voice = currentVoice;
+  u.rate = currentSpeed;
+  u.lang = currentVoice?.lang||'fr-FR';
+  let wc=0;
+  u.onboundary = e => {
+    if(e.name==='word'){
+      const prev = document.getElementById(`w${wc-1}`);
+      if(prev){ prev.classList.remove('active'); prev.classList.add('done'); }
+      const cur = document.getElementById(`w${wc}`);
+      if(cur){ cur.classList.add('active'); cur.scrollIntoView({block:'center',behavior:'smooth'}); }
+      setProgress(Math.round(wc/ws.length*100));
+      wc++;
+    }
+  };
+  u.onend = ()=>{
+    isPlaying=false; isPaused=false;
+    updatePlayBtn();
+    setProgress(100);
+    document.getElementById('reader-status').textContent = '✓ Lecture terminée';
+    announce('Lecture terminée.');
+  };
+  readUtterance = u;
+  synth.speak(u);
+  isPlaying=true; isPaused=false;
+  updatePlayBtn();
+  document.getElementById('reader-status').textContent = '▶ Lecture en cours…';
+}
+
+function pauseRead(){ synth.pause(); isPaused=true; isPlaying=false; updatePlayBtn(); document.getElementById('reader-status').textContent='⏸ En pause'; announce('Pause.'); }
+function resumeRead(){ synth.resume(); isPaused=false; isPlaying=true; updatePlayBtn(); document.getElementById('reader-status').textContent='▶ Lecture en cours…'; announce('Lecture reprise.'); }
+function stopRead(){ synth.cancel(); isPlaying=false; isPaused=false; updatePlayBtn(); setProgress(0); document.getElementById('reader-status').textContent='Arrêté.'; }
+function restartRead(){ stopRead(); setTimeout(startRead,200); announce('Recommencer depuis le début.'); }
+
+function updatePlayBtn(){
+  const btn = document.getElementById('play-btn');
+  if(!btn) return;
+  if(isPlaying){ btn.textContent='⏸'; btn.classList.add('playing'); btn.setAttribute('aria-label','Mettre en pause'); }
+  else { btn.textContent='▶'; btn.classList.remove('playing'); btn.setAttribute('aria-label', isPaused?'Reprendre':'Lire le livre'); }
+}
+
+function setProgress(p){
+  const fill = document.getElementById('progress-fill');
+  const bar = document.getElementById('progress-bar');
+  if(fill) fill.style.width=p+'%';
+  if(bar) bar.setAttribute('aria-valuenow',p);
+}
+
+function setSpeed(s){
+  currentSpeed = s;
+  document.querySelectorAll('.speed-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById(`spd-${s}`);
+  if(btn) btn.classList.add('active');
+  announce(`Vitesse : ${s === 0.8 ? 'lente' : s===1?'normale':s===1.3?'rapide':'très rapide'}`);
+  if(isPlaying){ stopRead(); setTimeout(startRead,100); }
+}
+
+// ── AI ASSISTANT ──
+const AI_RESPONSES = [
+  { keywords:['bonjour','salut','hello'], response:'Bonjour ! Je suis votre assistant VocaBook. Je peux vous recommander des livres, vous parler d\'un auteur, ou vous aider à choisir votre prochaine lecture. Que souhaitez-vous ?' },
+  { keywords:['victor hugo','hugo'], response:'Victor Hugo est l\'un des plus grands écrivains français. Ses œuvres majeures sont Les Misérables, Notre-Dame de Paris, et les Contemplations. Je vous recommande de commencer par Les Misérables, une épopée humaine magnifique.' },
+  { keywords:['recommande','conseil','quoi lire','choisir'], response:'Je vous recommande Les Misérables de Victor Hugo pour une aventure humaine profonde, Le Petit Prince de Saint-Exupéry pour une lecture poétique et touchante, ou Le Comte de Monte-Cristo de Dumas pour du suspense et de l\'aventure. Qu\'est-ce qui vous attire le plus ?' },
+  { keywords:['aventure','action','suspense'], response:'Pour l\'aventure, je vous recommande Le Comte de Monte-Cristo d\'Alexandre Dumas, ou Vingt mille lieues sous les mers de Jules Verne. Deux chefs-d\'œuvre palpitants que vous pouvez écouter maintenant dans notre bibliothèque.' },
+  { keywords:['triste','émotion','toucher','pleurer'], response:'Si vous aimez les histoires émouvantes, Les Misérables de Victor Hugo vous touchera profondément. Germinal d\'Émile Zola sur la misère des mineurs est aussi très fort. Et Le Petit Prince est un conte déchirant sur l\'amour et la perte.' },
+  { keywords:['court','rapide','petit'], response:'Pour une lecture courte, je vous recommande Le Petit Prince de Saint-Exupéry ou L\'Étranger d\'Albert Camus. Ce sont deux œuvres brèves mais d\'une profondeur extraordinaire.' },
+  { keywords:['philosophie','réfléchir','sens','vie'], response:'Pour la philosophie, Candide de Voltaire est parfait : drôle et profond à la fois. L\'Étranger de Camus pose des questions essentielles sur le sens de la vie. Et Les Fleurs du Mal de Baudelaire est une méditation poétique sur l\'existence.' },
+  { keywords:['aveugle','malvoyant','accessib'], response:'VocaBook est conçu spécialement pour les personnes malvoyantes et aveugles. Tous les livres se lisent automatiquement à voix haute. Vous n\'avez besoin que d\'un doigt pour tout faire.' },
+  { keywords:['merci','super','bien','bravo','excellent'], response:'C\'est un plaisir de vous aider ! La lecture doit être accessible à tous. N\'hésitez pas à me demander une recommandation à tout moment.' },
+];
+
+function greetAI(){
+  const msg = 'Bonjour ! Je suis votre assistant VocaBook. Appuyez sur le micro et posez-moi une question sur les livres.';
+  addAIMessage(msg, 'bot');
+  announce(msg);
+}
+
+function addAIMessage(text, role){
+  const box = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  div.innerHTML = `
+    <div class="ai-avatar ${role==='bot'?'bot':'user'}">${role==='bot'?'🤖':'👤'}</div>
+    <div class="ai-bubble ${role==='bot'?'bot':'user'}">${text}</div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function getAIResponse(query){
+  const q = query.toLowerCase();
+  for(const item of AI_RESPONSES){
+    if(item.keywords.some(k=>q.includes(k))) return item.response;
+  }
+  return `Je n'ai pas bien compris "${query}". Vous pouvez me demander une recommandation de livre, des infos sur un auteur, ou de l'aide pour choisir votre prochaine lecture.`;
+}
+
+function startAIVoice(){
+  synth.cancel();
+  const btn = document.getElementById('ai-mic');
+  const hint = document.getElementById('ai-hint');
+
+  // Bouton rouge = écoute
+  btn.style.background = 'radial-gradient(circle at 38% 32%,#ff4466,#660022)';
+  btn.style.boxShadow = '0 0 0 16px rgba(255,68,102,0.15),0 0 60px rgba(255,68,102,0.5)';
+  btn.style.animation = 'pulse-red 0.7s ease-in-out infinite';
+  btn.innerHTML = '<span>🔴</span><span style="font-size:12px;font-weight:700;letter-spacing:2px;font-family:\'Segoe UI\',Arial,sans-serif;">ÉCOUTE…</span>';
+  hint.textContent = 'Je vous écoute… parlez maintenant';
+  hint.style.color = 'var(--red)';
+
+  function resetBtn(){
+    btn.style.background = 'radial-gradient(circle at 38% 32%,#00e5ff,#003366)';
+    btn.style.boxShadow = '0 0 0 0 rgba(0,229,255,0.4),0 0 50px rgba(0,229,255,0.35)';
+    btn.style.animation = 'breathe 3s ease-in-out infinite';
+    btn.innerHTML = '<span>🎙</span><span style="font-size:12px;font-weight:700;letter-spacing:2px;font-family:\'Segoe UI\',Arial,sans-serif;">PARLER</span>';
+    hint.style.color = 'var(--cyan)';
+    hint.textContent = 'Appuyez sur le bouton et posez votre question';
+  }
+
+  const rec = buildRecognition('fr-FR', query => {
+    resetBtn();
+    addAIMessage(query, 'user');
+    setTimeout(()=>{
+      const response = getAIResponse(query);
+      addAIMessage(response, 'bot');
+      announce(response);
+    }, 300);
+  }, ()=>{
+    resetBtn();
+    hint.textContent = 'Je n\'ai pas compris. Réessayez.';
+    announce('Je n\'ai pas compris. Réessayez.');
+  });
+
+  if(!rec){
+    resetBtn();
+    announce('Recherche vocale non disponible sur ce navigateur. Utilisez Chrome.');
+    return;
+  }
+  rec.start();
+}
+</script>
+
+</body>
+</html>
