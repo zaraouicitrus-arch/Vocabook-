@@ -121,8 +121,16 @@ var currentMode = 'home';
 
 function loadVoices(){
   var vs = synth.getVoices();
+  // Cherche la meilleure voix feminine française douce
   var fr = vs.filter(function(v){ return v.lang.startsWith('fr'); });
-  femaleVoice = fr.find(function(v){ return /amelie|marie|aurelie|celine|juliette|sophie|claire|google fr/i.test(v.name); }) || fr[0] || vs[0];
+  femaleVoice =
+    fr.find(function(v){ return /amelie/i.test(v.name); }) ||
+    fr.find(function(v){ return /marie|aurelie|celine|juliette|sophie|claire|fiona|samantha/i.test(v.name); }) ||
+    fr.find(function(v){ return /google.*fr|fr.*google/i.test(v.name); }) ||
+    fr.find(function(v){ return v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('femme'); }) ||
+    fr[0] ||
+    vs.find(function(v){ return v.lang.startsWith('fr'); }) ||
+    vs[0];
 }
 loadVoices();
 synth.onvoiceschanged = loadVoices;
@@ -135,8 +143,8 @@ function speak(text, onEnd){
   setMicState('speaking');
   var u = new SpeechSynthesisUtterance(text);
   if(femaleVoice) u.voice = femaleVoice;
-  u.rate = 0.87;
-  u.pitch = 1.1;
+  u.rate = 0.82;  // Plus lente = plus apaisante
+  u.pitch = 1.15; // Plus haute = plus feminine et douce
   u.lang = femaleVoice ? femaleVoice.lang : 'fr-FR';
   u.onend = function(){
     isSpeaking = false;
@@ -232,7 +240,7 @@ function startApp(){
   document.getElementById('start-screen').style.display = 'none';
   document.getElementById('app').classList.add('active');
   loadVoices();
-  setTimeout(welcomeHome, 600);
+  setTimeout(welcomeHome, 300);
 }
 
 // ACCUEIL
@@ -247,7 +255,7 @@ function welcomeHome(){
     msg = 'Bonjour. Tu es en mode aveugle. Tu as trois choix. '
         + 'Premier choix : reprendre la lecture du livre en cours. '
         + 'Deuxième choix : chercher un nouveau livre. '
-        + 'Troisième choix : parler avec ton compagnon IA. '
+        + 
         + 'Que veux-tu faire ?';
     hint = '1. REPRENDRE LA LECTURE DU LIVRE EN COURS\n2. CHERCHER UN NOUVEAU LIVRE\n3. COMPAGNON IA';
   } else {
@@ -270,10 +278,7 @@ function handleHome(cmd){
     startBookSearch();
     return;
   }
-  if(/(assistant|compagnon|IA|intelligence|troisième choix|choix trois|choix 3|trois$|3$)/.test(cmd)){
-    startAI();
-    return;
-  }
+
   speak('Je n\'ai pas compris. Dis : reprendre la lecture du livre en cours, chercher un nouveau livre, ou compagnon IA.');
 }
 
@@ -582,7 +587,7 @@ function startRead(){
   var u = new SpeechSynthesisUtterance(startText);
   if(femaleVoice) u.voice = femaleVoice;
   u.rate = readSpeed;
-  u.pitch = 1.08;
+  u.pitch = 1.12; // Voix douce et apaisante
   u.lang = femaleVoice ? femaleVoice.lang : 'fr-FR';
 
   u.onboundary = function(e){
