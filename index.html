@@ -6,726 +6,800 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="theme-color" content="#000010"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>VocaBook – Lecture pour tous</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<title>VocaBook</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  :root{
-    --bg:#000010;--surface:#05051a;--card:#0a0a25;
-    --cyan:#00e5ff;--cyan2:#00b4cc;--cyan-glow:rgba(0,229,255,0.15);
-    --gold:#c8a96e;--gold2:#e8cc9a;
-    --text:#e8f4ff;--dim:#4a6080;--red:#ff4466;
-    --green:#00ff88;
-  }
-  html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;overflow-x:hidden;}
-
-/* ── SCREENS ── */
-.screen{display:none;min-height:100vh;flex-direction:column;align-items:center;padding:0 0 32px;}
-.screen.active{display:flex;}
-
-/* ── STARS BG ── */
-#stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:#000010;color:#e8f4ff;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;}
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
 .star{position:absolute;border-radius:50%;background:white;animation:twinkle 3s infinite;}
-@keyframes twinkle{0%,100%{opacity:0.2;}50%{opacity:1;}}
-
-/* ── HEADER ── */
-.header{width:100%;background:rgba(0,0,16,0.95);border-bottom:1px solid rgba(0,229,255,0.2);padding:16px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);}
-.header h1{font-size:20px;letter-spacing:4px;color:var(–cyan);text-transform:uppercase;font-weight:300;flex:1;}
-.back-btn{background:transparent;border:1px solid rgba(0,229,255,0.3);color:var(–cyan);font-size:20px;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-
-/* ── HOME ── */
-#home{background:var(–bg);justify-content:flex-start;padding-top:0;}
-.home-hero{width:100%;padding:32px 20px 24px;text-align:center;position:relative;z-index:1;}
-.logo-icon{font-size:60px;filter:drop-shadow(0 0 30px var(–cyan));animation:float 4s ease-in-out infinite;}
-@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
-.logo-title{font-size:38px;letter-spacing:10px;color:var(–cyan);text-transform:uppercase;font-weight:100;margin:12px 0 4px;}
-.logo-sub{font-size:12px;color:var(–dim);letter-spacing:4px;text-transform:uppercase;}
-
-/* ── MIC BUTTON ── */
-.mic-zone{position:relative;z-index:1;margin:28px 0 16px;}
-.mic-btn{
-width:170px;height:170px;border-radius:50%;border:none;cursor:pointer;
-background:radial-gradient(circle at 38% 32%, #00e5ff, #003366);
-display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-color:#000010;font-size:52px;
-box-shadow:0 0 0 0 rgba(0,229,255,0.4), 0 0 60px rgba(0,229,255,0.3), inset 0 0 30px rgba(255,255,255,0.1);
-transition:all 0.3s;
-animation:breathe 3s ease-in-out infinite;
-}
-.mic-btn.listening{
-background:radial-gradient(circle at 38% 32%, #ff4466, #660022);
-box-shadow:0 0 0 20px rgba(255,68,102,0.15), 0 0 80px rgba(255,68,102,0.5);
-animation:pulse-red 0.7s ease-in-out infinite;
-}
-.mic-btn span.label{font-size:13px;font-weight:700;letter-spacing:3px;color:#000010;font-family:‘Segoe UI’,Arial,sans-serif;}
-@keyframes breathe{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,229,255,0.4),0 0 60px rgba(0,229,255,0.3);}50%{transform:scale(1.04);box-shadow:0 0 0 12px rgba(0,229,255,0.1),0 0 80px rgba(0,229,255,0.5);}}
-@keyframes pulse-red{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
-
-.mic-status{font-size:15px;color:var(–cyan);font-style:italic;min-height:22px;text-align:center;padding:0 20px;}
-
-/* ── CATEGORY GRID ── */
-.section-label{font-size:11px;color:var(–dim);letter-spacing:4px;text-transform:uppercase;margin:20px 0 12px;text-align:center;width:100%;padding:0 20px;}
-.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;padding:0 16px;z-index:1;}
-.cat-btn{
-background:var(–card);border:1px solid rgba(0,229,255,0.15);border-radius:20px;
-padding:20px 14px;cursor:pointer;color:var(–text);
-display:flex;align-items:center;gap:12px;
-font-family:‘Segoe UI’,Arial,sans-serif;font-size:15px;font-weight:600;
-transition:all 0.2s;position:relative;overflow:hidden;
-}
-.cat-btn::before{content:’’;position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,229,255,0.05),transparent);opacity:0;transition:opacity 0.2s;}
-.cat-btn:active{border-color:var(–cyan);transform:scale(0.97);}
-.cat-btn:active::before{opacity:1;}
-.cat-icon{font-size:30px;flex-shrink:0;}
-
-/* ── BOTTOM ACTIONS ── */
-.bottom-actions{display:flex;gap:12px;padding:20px 16px 0;width:100%;z-index:1;}
-.action-btn{flex:1;background:var(–card);border:1px solid rgba(0,229,255,0.2);border-radius:18px;padding:16px 12px;cursor:pointer;color:var(–cyan);font-family:‘Segoe UI’,Arial,sans-serif;font-size:14px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all 0.2s;}
-.action-btn .icon{font-size:26px;}
-.action-btn:active{background:rgba(0,229,255,0.1);transform:scale(0.97);}
-
-/* ── LIBRARY ── */
-.lib-content{width:100%;max-width:640px;padding:16px;flex:1;}
-.book-card{
-background:var(–card);border:1px solid rgba(0,229,255,0.12);border-radius:20px;
-padding:18px;display:flex;align-items:center;gap:16px;
-cursor:pointer;width:100%;font-family:‘Segoe UI’,Arial,sans-serif;
-color:var(–text);text-align:left;margin-bottom:12px;
-transition:all 0.2s;position:relative;overflow:hidden;
-}
-.book-card::after{content:‘▶’;position:absolute;right:18px;font-size:18px;color:rgba(0,229,255,0.4);}
-.book-card:active{border-color:var(–cyan);transform:scale(0.98);}
-.book-num{width:44px;height:44px;border-radius:50%;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:var(–cyan);}
-.book-info{flex:1;min-width:0;padding-right:24px;}
-.book-title{font-size:16px;font-weight:700;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.book-author{font-size:13px;color:var(–dim);font-style:italic;}
-
-.loading-box{text-align:center;padding:60px 20px;}
-.loading-icon{font-size:50px;animation:spin 2s linear infinite;}
-@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-
-/* ── READER ── */
-#reader{justify-content:flex-start;}
-.reader-content{flex:1;overflow-y:auto;padding:20px;max-width:640px;width:100%;}
-.reader-text{font-size:17px;line-height:2.4;color:var(–text);}
-.word{transition:background 0.06s;border-radius:4px;padding:0 1px;}
-.word.active{background:var(–cyan);color:#000010;font-weight:700;}
-.word.done{color:var(–dim);}
-.progress-bar{height:4px;background:rgba(0,229,255,0.1);}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(–cyan),var(–gold));transition:width 0.3s;}
-
-/* ── CONTROLS ── */
-.controls{background:rgba(0,0,16,0.97);border-top:1px solid rgba(0,229,255,0.15);padding:20px 20px 32px;width:100%;backdrop-filter:blur(12px);}
-.speed-row{display:flex;justify-content:center;gap:8px;margin-bottom:20px;}
-.speed-btn{background:var(–card);border:1px solid rgba(0,229,255,0.15);border-radius:20px;padding:8px 18px;font-size:13px;cursor:pointer;color:var(–dim);font-family:‘Segoe UI’,Arial,sans-serif;transition:all 0.2s;}
-.speed-btn.active{background:rgba(0,229,255,0.15);border-color:var(–cyan);color:var(–cyan);}
-.main-controls{display:flex;justify-content:center;align-items:center;gap:20px;margin-bottom:16px;}
-.ctrl-btn{background:var(–card);border:1px solid rgba(0,229,255,0.2);border-radius:50%;width:60px;height:60px;font-size:24px;cursor:pointer;color:var(–text);display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
-.ctrl-btn:active{transform:scale(0.93);}
-.play-btn{
-width:100px;height:100px;font-size:40px;
-background:radial-gradient(circle at 38% 32%, var(–gold2), #8a5c20);
-border:none;color:#000010;
-box-shadow:0 0 40px rgba(200,169,110,0.4);
-}
-.play-btn.playing{
-background:radial-gradient(circle at 38% 32%, #00e5ff, #003366);
-color:#000010;
-box-shadow:0 0 50px rgba(0,229,255,0.5);
-}
-.reader-status{text-align:center;font-size:13px;color:var(–dim);font-style:italic;}
-
-/* ── AI SCREEN ── */
-#ai-screen{justify-content:flex-start;}
-.ai-messages{flex:1;overflow-y:auto;padding:16px;width:100%;max-width:640px;}
-.ai-msg{margin-bottom:16px;display:flex;gap:10px;align-items:flex-start;}
-.ai-msg.user{flex-direction:row-reverse;}
-.ai-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.ai-avatar.bot{background:rgba(0,229,255,0.15);border:1px solid rgba(0,229,255,0.3);}
-.ai-avatar.user{background:rgba(200,169,110,0.15);border:1px solid rgba(200,169,110,0.3);}
-.ai-bubble{max-width:78%;padding:12px 16px;border-radius:18px;font-size:15px;line-height:1.6;}
-.ai-bubble.bot{background:var(–card);border:1px solid rgba(0,229,255,0.15);border-radius:4px 18px 18px 18px;}
-.ai-bubble.user{background:rgba(200,169,110,0.12);border:1px solid rgba(200,169,110,0.2);border-radius:18px 4px 18px 18px;color:var(–gold2);}
-.ai-input-zone{padding:16px;width:100%;max-width:640px;display:flex;gap:12px;align-items:center;background:rgba(0,0,16,0.97);border-top:1px solid rgba(0,229,255,0.15);}
-.ai-speak-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:28px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;flex-shrink:0;}
-.ai-speak-btn.idle{background:radial-gradient(circle at 38% 32%,var(–cyan),#003366);color:#000010;box-shadow:0 0 20px rgba(0,229,255,0.3);}
-.ai-speak-btn.listening{background:radial-gradient(circle at 38% 32%,var(–red),#660022);color:white;animation:pulse-red 0.7s infinite;}
-.ai-hint{flex:1;font-size:13px;color:var(–dim);font-style:italic;line-height:1.5;}
-
-/* ── QR SCREEN ── */
-#qr-screen{justify-content:center;align-items:center;padding:32px 20px;}
-.qr-card{background:var(–card);border:1px solid rgba(0,229,255,0.2);border-radius:28px;padding:32px;text-align:center;width:100%;max-width:360px;}
-.qr-title{font-size:22px;color:var(–cyan);letter-spacing:3px;text-transform:uppercase;font-weight:300;margin-bottom:6px;}
-.qr-sub{font-size:13px;color:var(–dim);margin-bottom:24px;}
-#qrcode{display:flex;justify-content:center;margin-bottom:24px;}
-#qrcode img,#qrcode canvas{border-radius:12px;border:4px solid white;}
-.qr-url{font-size:13px;color:var(–cyan);word-break:break-all;margin-bottom:20px;padding:10px;background:rgba(0,229,255,0.05);border-radius:10px;border:1px solid rgba(0,229,255,0.15);}
-.qr-desc{font-size:14px;color:var(–dim);line-height:1.7;}
-
-/* ── ARIA STATUS ── */
+@keyframes twinkle{0%,100%{opacity:0.1;}50%{opacity:0.5;}}
 #aria-live{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
 
-/* ── GLOW RING ── */
-.glow-ring{position:fixed;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,0.04) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:0;}
+/* DÉMARRAGE */
+#start-screen{position:fixed;inset:0;z-index:1000;background:#000010;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:32px;cursor:pointer;}
+.logo-icon{font-size:72px;filter:drop-shadow(0 0 30px #00e5ff);animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.logo-title{font-size:34px;letter-spacing:10px;color:#00e5ff;text-transform:uppercase;font-weight:100;text-align:center;}
+.logo-sub{font-size:15px;color:#2a4060;text-align:center;line-height:1.7;max-width:300px;}
+.tap-hint{font-size:16px;color:#c8a96e;border:1px solid #c8a96e;border-radius:20px;padding:16px 32px;animation:pgold 2s infinite;text-align:center;}
+@keyframes pgold{0%,100%{box-shadow:0 0 0 0 rgba(200,169,110,0.4);}50%{box-shadow:0 0 0 14px rgba(200,169,110,0);}}
+
+/* APP */
+#app{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;background:#000010;}
+#app.active{display:flex;}
+
+/* ÉCRAN NOIR */
+#dark-overlay{position:fixed;inset:0;z-index:500;background:#000000;display:none;align-items:center;justify-content:center;cursor:pointer;}
+#dark-overlay.active{display:flex;}
+#dark-overlay p{font-size:13px;color:#0a1a0a;text-align:center;padding:0 32px;}
+
+/* ZONE ÉCOUTE */
+#listen-zone{flex:1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;gap:22px;cursor:pointer;position:relative;z-index:1;}
+
+/* CERCLE MIC */
+#mic-circle{width:170px;height:170px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:60px;transition:all 0.3s;flex-shrink:0;}
+#mic-circle.idle{background:radial-gradient(circle at 38% 32%,#001a2e,#000810);border:2px solid rgba(0,229,255,0.15);}
+#mic-circle.listening{background:radial-gradient(circle at 38% 32%,#002a44,#000d20);border:2px solid rgba(0,229,255,0.7);box-shadow:0 0 0 16px rgba(0,229,255,0.06),0 0 70px rgba(0,229,255,0.35);animation:mplse 1s ease-in-out infinite;}
+#mic-circle.speaking{background:radial-gradient(circle at 38% 32%,#2a1600,#100800);border:2px solid rgba(200,169,110,0.7);box-shadow:0 0 0 16px rgba(200,169,110,0.06),0 0 70px rgba(200,169,110,0.3);animation:mplseg 1.2s ease-in-out infinite;}
+@keyframes mplse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
+@keyframes mplseg{0%,100%{transform:scale(1);}50%{transform:scale(1.04);}}
+#mic-label{font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:700;}
+#mic-circle.idle #mic-label{color:#1a3050;}
+#mic-circle.listening #mic-label{color:#00e5ff;}
+#mic-circle.speaking #mic-label{color:#c8a96e;}
+
+#main-speech{font-size:18px;line-height:1.8;text-align:center;color:#e8f4ff;max-width:340px;min-height:72px;}
+#commands-hint{font-size:13px;color:#1e3a5a;text-align:center;max-width:320px;line-height:2;border-top:1px solid rgba(0,229,255,0.06);padding-top:16px;width:100%;white-space:pre-line;}
+
+/* BARRE LECTEUR */
+#reader-bar{width:100%;background:rgba(0,0,16,0.98);border-top:1px solid rgba(0,229,255,0.08);padding:12px 20px 26px;display:none;flex-direction:column;gap:6px;flex-shrink:0;}
+#reader-bar.visible{display:flex;}
+#reader-book-title{font-size:12px;color:#00e5ff;letter-spacing:2px;text-transform:uppercase;text-align:center;}
+#reader-chapter-info{font-size:11px;color:#1a3050;text-align:center;}
+#reader-pb{height:3px;background:rgba(0,229,255,0.08);border-radius:2px;}
+#reader-pf{height:100%;background:linear-gradient(90deg,#00e5ff,#c8a96e);transition:width 0.4s;border-radius:2px;width:0%;}
+#reader-cmds{font-size:11px;color:#152840;text-align:center;margin-top:2px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:rgba(0,255,136,0.12);border:1px solid #00ff88;border-radius:20px;padding:10px 20px;font-size:13px;color:#00ff88;z-index:600;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
 </style>
 
 </head>
 <body>
-
-<div aria-live="assertive" aria-atomic="true" id="aria-live"></div>
-<div class="glow-ring"></div>
+<div id="aria-live" aria-live="assertive" aria-atomic="true"></div>
 <div id="stars"></div>
+<div class="toast" id="toast"></div>
 
-<!-- ══════════════ HOME ══════════════ -->
+<div id="dark-overlay" onclick="wakeScreen()">
+  <p>Lecture en cours — touchez pour éclairer</p>
+</div>
 
-<section id="home" class="screen active" aria-label="Accueil VocaBook">
+<div id="start-screen" onclick="startApp()">
+  <div class="logo-icon">📖</div>
+  <h1 class="logo-title">VocaBook</h1>
+  <p class="logo-sub">Application de lecture audio pour personnes malvoyantes et aveugles</p>
+  <div class="tap-hint">👆 Touchez l'écran une seule fois pour démarrer</div>
+</div>
 
-  <div class="home-hero">
-    <div class="logo-icon" aria-hidden="true">📖</div>
-    <h1 class="logo-title">VocaBook</h1>
-    <p class="logo-sub">La bibliothèque qui vous parle</p>
-  </div>
-
-  <!-- BOUTON MICRO PRINCIPAL -->
-
-  <div class="mic-zone">
-    <button class="mic-btn" id="home-mic" onclick="startHomeVoice()"
-      aria-label="Appuyez et parlez pour chercher un livre">
-      <span aria-hidden="true">🎙</span>
-      <span class="label" aria-hidden="true">PARLER</span>
-    </button>
-  </div>
-  <p class="mic-status" id="home-status" aria-live="polite">Appuyez et dites le nom d'un livre ou d'un auteur</p>
-
-  <p class="section-label">— Choisissez une catégorie —</p>
-
-  <div class="cat-grid" role="list" aria-label="Catégories de livres">
-    <button class="cat-btn" role="listitem" onclick="browseCategory('roman')" aria-label="Catégorie Romans">
-      <span class="cat-icon">📖</span><span>Romans</span>
-    </button>
-    <button class="cat-btn" role="listitem" onclick="browseCategory('aventure')" aria-label="Catégorie Aventure">
-      <span class="cat-icon">⚔️</span><span>Aventure</span>
-    </button>
-    <button class="cat-btn" role="listitem" onclick="browseCategory('policier')" aria-label="Catégorie Policier">
-      <span class="cat-icon">🔍</span><span>Policier</span>
-    </button>
-    <button class="cat-btn" role="listitem" onclick="browseCategory('philosophie')" aria-label="Catégorie Philosophie">
-      <span class="cat-icon">🧠</span><span>Philosophie</span>
-    </button>
-    <button class="cat-btn" role="listitem" onclick="browseCategory('poesie')" aria-label="Catégorie Poésie">
-      <span class="cat-icon">🌸</span><span>Poésie</span>
-    </button>
-    <button class="cat-btn" role="listitem" onclick="browseCategory('histoire')" aria-label="Catégorie Histoire">
-      <span class="cat-icon">🏛️</span><span>Histoire</span>
-    </button>
-  </div>
-
-  <div class="bottom-actions">
-    <button class="action-btn" onclick="showScreen('ai-screen'); greetAI();" aria-label="Assistant IA vocal">
-      <span class="icon" aria-hidden="true">🤖</span>
-      <span>Assistant IA</span>
-    </button>
-    <button class="action-btn" onclick="showScreen('qr-screen');" aria-label="QR Code accès">
-      <span class="icon" aria-hidden="true">📱</span>
-      <span>QR Code</span>
-    </button>
-  </div>
-</section>
-
-<!-- ══════════════ LIBRARY ══════════════ -->
-
-<section id="library" class="screen" aria-label="Bibliothèque de livres">
-  <header class="header">
-    <button class="back-btn" onclick="goHome()" aria-label="Retour à l'accueil">←</button>
-    <h1 id="lib-title">Bibliothèque</h1>
-    <button class="back-btn" onclick="startHomeVoiceInLib()" aria-label="Nouvelle recherche vocale" style="font-size:18px;">🎙</button>
-  </header>
-  <div class="lib-content" id="lib-content" role="list" aria-label="Liste des livres"></div>
-</section>
-
-<!-- ══════════════ READER ══════════════ -->
-
-<section id="reader" class="screen" aria-label="Lecteur de livre">
-  <header class="header">
-    <button class="back-btn" onclick="goLib()" aria-label="Retour à la liste">←</button>
-    <h1 id="reader-title">Lecture</h1>
-  </header>
-  <div class="progress-bar" role="progressbar" aria-label="Progression" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progress-bar">
-    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
-  </div>
-  <div class="reader-content">
-    <div class="reader-text" id="reader-text" aria-label="Texte du livre"></div>
-  </div>
-  <div class="controls">
-    <div class="speed-row" role="group" aria-label="Vitesse de lecture">
-      <button class="speed-btn active" onclick="setSpeed(0.8)" id="spd-0.8">Lent</button>
-      <button class="speed-btn" onclick="setSpeed(1)" id="spd-1">Normal</button>
-      <button class="speed-btn" onclick="setSpeed(1.3)" id="spd-1.3">Rapide</button>
-      <button class="speed-btn" onclick="setSpeed(1.6)" id="spd-1.6">Très rapide</button>
+<div id="app">
+  <div id="listen-zone" onclick="onTap()">
+    <div id="mic-circle" class="idle">
+      <span>🎙</span>
+      <span id="mic-label">EN ATTENTE</span>
     </div>
-    <div class="main-controls">
-      <button class="ctrl-btn" onclick="stopRead(); announce('Arrêté.');" aria-label="Arrêter">⏹</button>
-      <button class="ctrl-btn play-btn" id="play-btn" onclick="togglePlay()" aria-label="Lire ou mettre en pause">▶</button>
-      <button class="ctrl-btn" onclick="restartRead();" aria-label="Recommencer">↺</button>
-    </div>
-    <p class="reader-status" id="reader-status" aria-live="polite">Appuyez sur ▶ pour commencer</p>
+    <p id="main-speech">…</p>
+    <p id="commands-hint"></p>
   </div>
-</section>
-
-<!-- ══════════════ AI SCREEN ══════════════ -->
-
-<section id="ai-screen" class="screen" aria-label="Assistant IA vocal">
-  <header class="header">
-    <button class="back-btn" onclick="goHome()" aria-label="Retour à l'accueil">←</button>
-    <h1>Assistant IA</h1>
-  </header>
-
-  <!-- Conversation -->
-
-  <div class="ai-messages" id="ai-messages" aria-live="polite" aria-label="Conversation avec l'assistant"></div>
-
-  <!-- Zone micro bien visible -->
-
-  <div style="background:rgba(0,0,16,0.97);border-top:1px solid rgba(0,229,255,0.2);padding:24px 20px 36px;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;">
-    <p id="ai-hint" style="font-size:15px;color:var(--cyan);font-style:italic;text-align:center;min-height:22px;">Appuyez sur le bouton et posez votre question</p>
-
-```
-<button id="ai-mic" onclick="startAIVoice()"
-  aria-label="Appuyez pour parler à l'assistant"
-  style="width:130px;height:130px;border-radius:50%;border:none;cursor:pointer;
-    background:radial-gradient(circle at 38% 32%,#00e5ff,#003366);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-    font-size:44px;color:#000010;
-    box-shadow:0 0 0 0 rgba(0,229,255,0.4),0 0 50px rgba(0,229,255,0.35);
-    animation:breathe 3s ease-in-out infinite;transition:all 0.3s;">
-  <span>🎙</span>
-  <span style="font-size:12px;font-weight:700;letter-spacing:2px;font-family:'Segoe UI',Arial,sans-serif;">PARLER</span>
-</button>
-
-<p style="font-size:12px;color:var(--dim);text-align:center;max-width:280px;line-height:1.6;">
-  Exemples : "Recommande-moi un livre", "Qui est Victor Hugo", "Je veux de l'aventure"
-</p>
-```
-
+  <div id="reader-bar">
+    <div id="reader-book-title"></div>
+    <div id="reader-chapter-info"></div>
+    <div id="reader-pb"><div id="reader-pf"></div></div>
+    <div id="reader-cmds">LIRE · PAUSE · REPRENDRE · STOP · SUIVANT · PRÉCÉDENT · MARQUE-PAGE · ACCUEIL</div>
   </div>
-</section>
-
-<!-- ══════════════ QR SCREEN ══════════════ -->
-
-<section id="qr-screen" class="screen" aria-label="QR Code d'accès">
-  <header class="header" style="width:100%;">
-    <button class="back-btn" onclick="goHome()" aria-label="Retour à l'accueil">←</button>
-    <h1>Accès VocaBook</h1>
-  </header>
-  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;width:100%;">
-    <div class="qr-card">
-      <h2 class="qr-title">VocaBook</h2>
-      <p class="qr-sub">Scannez pour accéder à l'application</p>
-      <div id="qrcode"></div>
-      <p class="qr-url" id="qr-url">payhip.com/Movoyage24</p>
-      <p class="qr-desc">📱 Scannez ce QR Code pour accéder à VocaBook depuis votre téléphone. Partagez-le autour de vous pour aider les personnes malvoyantes.</p>
-    </div>
-  </div>
-</section>
+</div>
 
 <script>
-// ══════════════════════════════════════════════════
-// CONFIG — modifiez cette ligne avec votre vrai lien
-const PAYHIP_URL = "https://payhip.com/Movoyage24";
-const APP_URL = window.location.href;
-// ══════════════════════════════════════════════════
-
-// ── STARS ──
+// ÉTOILES
 (function(){
-  const s = document.getElementById('stars');
-  for(let i=0;i<80;i++){
-    const d=document.createElement('div');
+  var s=document.getElementById('stars');
+  for(var i=0;i<50;i++){
+    var d=document.createElement('div');
     d.className='star';
-    const sz=Math.random()*2+0.5;
-    d.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*3}s;`;
+    var sz=Math.random()*1.5+0.3;
+    d.style.cssText='width:'+sz+'px;height:'+sz+'px;top:'+Math.random()*100+'%;left:'+Math.random()*100+'%;animation-delay:'+Math.random()*4+'s;animation-duration:'+(2+Math.random()*4)+'s;';
     s.appendChild(d);
   }
 })();
 
-// ── SPEECH ──
-let currentVoice = null;
-const synth = window.speechSynthesis;
+// VOIX
+var synth = window.speechSynthesis;
+var femaleVoice = null;
+var isSpeaking = false;
+var readSpeed = 0.88;
+var currentMode = 'home';
 
 function loadVoices(){
-  const vs = synth.getVoices();
-  currentVoice = vs.find(v=>v.lang.startsWith('fr')) || vs[0] || null;
+  var vs = synth.getVoices();
+  var fr = vs.filter(function(v){ return v.lang.startsWith('fr'); });
+  femaleVoice = fr.find(function(v){ return /amelie|marie|aurelie|celine|juliette|sophie|claire|google fr/i.test(v.name); }) || fr[0] || vs[0];
 }
 loadVoices();
 synth.onvoiceschanged = loadVoices;
 
-function announce(text, rate=1, onEnd=null){
+function speak(text, onEnd){
   document.getElementById('aria-live').textContent = text;
+  document.getElementById('main-speech').textContent = text;
   synth.cancel();
-  if(!text) return;
-  const u = new SpeechSynthesisUtterance(text);
-  if(currentVoice) u.voice = currentVoice;
-  u.rate = rate;
-  u.lang = currentVoice?.lang || 'fr-FR';
-  if(onEnd) u.onend = onEnd;
+  isSpeaking = true;
+  setMicState('speaking');
+  var u = new SpeechSynthesisUtterance(text);
+  if(femaleVoice) u.voice = femaleVoice;
+  u.rate = 0.87;
+  u.pitch = 1.1;
+  u.lang = femaleVoice ? femaleVoice.lang : 'fr-FR';
+  u.onend = function(){
+    isSpeaking = false;
+    if(onEnd) onEnd();
+    else startListening();
+  };
   synth.speak(u);
 }
 
-// ── SCREENS ──
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0,0);
-}
-function goHome(){ synth.cancel(); showScreen('home'); announce('Accueil.'); }
-function goLib(){ stopRead(); showScreen('library'); announce('Liste des livres.'); }
-
-// ── QR CODE ──
-window.addEventListener('load', function(){
-  setTimeout(()=>{
-    try{
-      new QRCode(document.getElementById('qrcode'),{
-        text: PAYHIP_URL,
-        width:200, height:200,
-        colorDark:'#000010', colorLight:'#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-      });
-      document.getElementById('qr-url').textContent = PAYHIP_URL;
-    } catch(e){}
-  },500);
-
-  // Greeting
-  setTimeout(()=>{
-    announce('Bienvenue sur VocaBook. Votre bibliothèque audio intelligente. Appuyez sur le grand bouton pour chercher un livre à la voix, ou choisissez une catégorie.');
-  }, 800);
-});
-
-// ── VOICE SEARCH ──
-let recognition = null;
-
-function buildRecognition(lang, onResult, onError){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR) return null;
-  const r = new SR();
-  r.lang = lang || 'fr-FR';
-  r.interimResults = false;
-  r.maxAlternatives = 1;
-  r.onresult = e => onResult(e.results[0][0].transcript);
-  r.onerror = () => onError && onError();
-  return r;
+function setMicState(state){
+  var c = document.getElementById('mic-circle');
+  var l = document.getElementById('mic-label');
+  c.className = state;
+  if(state==='idle') l.textContent = 'EN ATTENTE';
+  else if(state==='listening') l.textContent = "J'ÉCOUTE…";
+  else if(state==='speaking') l.textContent = 'JE PARLE…';
 }
 
-function startHomeVoice(){
-  synth.cancel();
-  const btn = document.getElementById('home-mic');
-  const status = document.getElementById('home-status');
-  btn.classList.add('listening');
-  btn.querySelector('.label').textContent = 'ÉCOUTE…';
-  status.textContent = '🔴 Je vous écoute…';
+function showHint(text){ document.getElementById('commands-hint').textContent = text; }
 
-  const rec = buildRecognition('fr-FR', query => {
-    btn.classList.remove('listening');
-    btn.querySelector('.label').textContent = 'PARLER';
-    status.textContent = `Recherche : "${query}"`;
-    announce(`Recherche : ${query}`);
-    fetchBooks(query, null);
-  }, () => {
-    btn.classList.remove('listening');
-    btn.querySelector('.label').textContent = 'PARLER';
-    status.textContent = 'Je n\'ai pas compris. Réessayez.';
-    announce('Je n\'ai pas compris. Réessayez.');
-  });
-
-  if(!rec){ announce('Recherche vocale non disponible. Choisissez une catégorie.'); btn.classList.remove('listening'); return; }
-  rec.start();
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
 
-function startHomeVoiceInLib(){
-  synth.cancel();
-  announce('Dites le nom d\'un livre ou d\'un auteur.', 1, () => {
-    const rec = buildRecognition('fr-FR', query => {
-      announce(`Recherche : ${query}`);
-      fetchBooks(query, null);
-    }, () => announce('Je n\'ai pas compris.'));
-    if(rec) rec.start();
-  });
+function onTap(){
+  if(isSpeaking){ synth.cancel(); isSpeaking = false; startListening(); }
 }
 
-// ── FETCH BOOKS ──
-const FALLBACK = [
-  {id:1,title:"Les Misérables",author:"Victor Hugo",text:"Les Misérables, par Victor Hugo. Jean Valjean, ancien forçat condamné pour avoir volé un pain, tente de se reconstruire une vie honnête après avoir été touché par la générosité d'un évêque. Devenu maire et industriel sous le nom de Monsieur Madeleine, il est rattrapé par son passé lorsque l'inspecteur Javert, obsédé par la loi, le reconnaît. Valjean adopte Cosette, une petite orpheline exploitée, et la protège avec tout l'amour paternel dont il est capable. À Paris, les barricades s'élèvent en 1832, et Valjean risque sa vie pour sauver Marius, le jeune amoureux de Cosette. Une fresque humaine sur la rédemption, la justice et l'amour."},
-  {id:2,title:"Le Petit Prince",author:"Antoine de Saint-Exupéry",text:"Le Petit Prince, par Antoine de Saint-Exupéry. Un aviateur en panne dans le désert du Sahara rencontre un mystérieux petit garçon venu d'une petite planète lointaine. Le petit prince lui raconte ses voyages à travers les étoiles, ses rencontres avec des grandes personnes étranges : un roi sans sujets, un vaniteux, un buveur triste, un businessman qui croit posséder les étoiles. Sur Terre, un renard lui enseigne le secret le plus important : on ne voit bien qu'avec le cœur, l'essentiel est invisible pour les yeux. Un conte poétique sur l'amitié, l'amour et le sens de la vie."},
-  {id:3,title:"Candide",author:"Voltaire",text:"Candide ou l'Optimisme, par Voltaire. Candide est un jeune homme naïf qui croit, sous l'influence du philosophe Pangloss, que tout est pour le mieux dans le meilleur des mondes possibles. Chassé de son château pour avoir embrassé la belle Cunégonde, il traverse le monde et accumule les catastrophes : guerres, tremblements de terre, inquisition, esclavage. Chaque nouvelle épreuve met à mal l'optimisme aveugle de son maître. Après mille aventures, Candide retrouve ses compagnons et conclut avec sagesse qu'il faut cultiver notre jardin. Un chef-d'œuvre philosophique du siècle des Lumières."},
-  {id:4,title:"Madame Bovary",author:"Gustave Flaubert",text:"Madame Bovary, par Gustave Flaubert. Emma Rouault, fille de fermier élevée dans un couvent, épouse Charles Bovary, médecin de campagne en Normandie. Mais la vie provinciale l'ennuie profondément. Nourrie de romans romantiques, elle rêve de passions ardentes, de luxe et d'aventures. Elle se lance dans des liaisons amoureuses qui la déçoivent, s'endette pour offrir des cadeaux à ses amants. Lorsque ses dettes deviennent insurmontables et que ses amants l'abandonnent, Emma s'empoisonne à l'arsenic. Un portrait magistral de l'illusion romantique et de la médiocrité bourgeoise au dix-neuvième siècle."},
-  {id:5,title:"Le Comte de Monte-Cristo",author:"Alexandre Dumas",text:"Le Comte de Monte-Cristo, par Alexandre Dumas. Edmond Dantès, jeune marin marseillais plein d'avenir, est sur le point d'épouser sa bien-aimée Mercédès quand des jaloux le dénoncent faussement comme bonapartiste. Emprisonné sans jugement au château d'If, il y passe quatorze longues années. En prison, il rencontre l'abbé Faria qui lui révèle l'existence d'un trésor fabuleux caché sur l'île de Monte-Cristo. Après son évasion miraculeuse, Dantès récupère le trésor et revient à Paris sous l'identité du mystérieux et richissime comte de Monte-Cristo pour assouvir une vengeance méticuleuse contre ceux qui l'ont trahi."},
-  {id:6,title:"Notre-Dame de Paris",author:"Victor Hugo",text:"Notre-Dame de Paris, par Victor Hugo. En 1482, la belle Esmeralda, jeune gitane qui danse sur le parvis de la cathédrale, fait tourner les têtes. Quasimodo, le bossu sourd et défiguré qui sonne les cloches de Notre-Dame, l'aime secrètement et la protège avec une dévotion absolue. L'archidiacre Frollo, dévoré par une passion coupable qu'il ne peut assumer, la fait condamner à mort. Le beau capitaine Phoebus joue avec son cœur sans l'aimer vraiment. Dans un Paris médiéval grouillant de vie, Victor Hugo célèbre la cathédrale gothique et peint une tragédie sur la beauté intérieure face à la monstruosité apparente."},
-  {id:7,title:"Germinal",author:"Émile Zola",text:"Germinal, par Émile Zola. Étienne Lantier, jeune ouvrier sans travail, arrive dans le bassin minier du Nord de la France et descend dans les puits de la mine de Montsou. Il découvre la misère profonde des mineurs : salaires de misère calculés à la tonne, accidents mortels fréquents, enfants envoyés travailler sous terre dès l'âge de dix ans. Révolté par ces injustices, Étienne organise les ouvriers et déclenche une grande grève. La lutte est dure, la faim tenaille les familles, la répression militaire est brutale. La grève échoue. Mais dans cette défaite, des graines de conscience ouvrière sont semées pour les luttes à venir."},
-  {id:8,title:"L'Étranger",author:"Albert Camus",text:"L'Étranger, par Albert Camus. Meursault, employé de bureau à Alger, apprend la mort de sa mère. Il assiste aux funérailles sans pleurer et reprend sa vie normale dès le lendemain, se baignant et allant au cinéma avec Marie. Il se lie avec Raymond, un voisin louche. Sur une plage algérienne, sous un soleil aveuglant qui écrase sa conscience, Meursault tire cinq coups de revolver sur un Arabe. Lors de son procès, c'est son indifférence apparente lors de l'enterrement de sa mère qui est retenu contre lui plus que le meurtre lui-même. Condamné à mort, il refuse les consolations du prêtre et embrasse l'absurdité de l'existence."},
-  {id:9,title:"Les Fleurs du Mal",author:"Charles Baudelaire",text:"Les Fleurs du Mal, par Charles Baudelaire. Recueil de poèmes publié en 1857, censuré et condamné pour immoralité à sa parution. Baudelaire explore les contradictions de l'âme humaine : la beauté et la laideur, le sacré et le profane, l'idéal et le spleen. Il chante Paris, la ville moderne, ses misères et ses splendeurs. Il évoque ses amours torturées pour Jeanne Duval, Madame Sabatier et Marie Daubrun. Entre paradis artificiels et abîmes du désespoir, entre l'élévation vers la beauté pure et la chute dans le vice, Baudelaire invente une poésie nouvelle qui influencera tout le symbolisme et la poésie moderne."},
-  {id:10,title:"Vingt mille lieues sous les mers",author:"Jules Verne",text:"Vingt mille lieues sous les mers, par Jules Verne. En 1866, des marins signalent la présence d'un monstre marin gigantesque dans les océans. Le professeur Aronnax, naturaliste français, part enquêter avec son fidèle domestique Conseil et le harponneur canadien Ned Land. Leur frégate percutée, ils se retrouvent prisonniers du mystérieux Nautilus, sous-marin extraordinaire commandé par le capitaine Nemo, génie solitaire et torturé qui a renoncé au monde des hommes. Pendant dix mois, ils explorent les merveilles des fonds marins, traversent tous les océans du globe, découvrent l'Atlantide engloutie. Une aventure extraordinaire qui a inventé la science-fiction moderne."}
-];
+// RECONNAISSANCE VOCALE
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var isListening = false;
+var recog = null;
 
-async function fetchBooks(query, topic){
-  showScreen('library');
-  document.getElementById('lib-title').textContent = query ? `"${query}"` : (topic || 'Bibliothèque');
-  const content = document.getElementById('lib-content');
-  content.innerHTML = `<div class="loading-box"><div class="loading-icon">🌀</div><p style="color:var(--dim);margin-top:16px">Recherche en cours…</p></div>`;
+function startListening(){
+  if(!SR){ setMicState('idle'); showHint('Recherche vocale non disponible. Utilisez Chrome.'); return; }
+  if(isListening || isSpeaking) return;
+  isListening = true;
+  setMicState('listening');
+  recog = new SR();
+  recog.lang = 'fr-FR';
+  recog.interimResults = false;
+  recog.maxAlternatives = 3;
+  recog.onresult = function(e){
+    isListening = false;
+    var cmd = e.results[0][0].transcript.toLowerCase().trim();
+    routeCommand(cmd);
+  };
+  recog.onerror = function(){
+    isListening = false;
+    setTimeout(startListening, 800);
+  };
+  recog.onend = function(){
+    isListening = false;
+    if(!isSpeaking && currentMode !== 'reading-active'){
+      setTimeout(startListening, 500);
+    }
+  };
+  try{ recog.start(); } catch(e){ isListening = false; }
+}
 
-  try{
-    let url = `https://gutendex.com/books/?languages=fr,en&page_size=20`;
-    if(query) url += `&search=${encodeURIComponent(query)}`;
-    if(topic) url += `&topic=${encodeURIComponent(topic)}`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error();
-    const data = await res.json();
-    const results = (data.results||[]).map(b=>({
-      id:b.id, title:b.title,
-      author:b.authors?.[0]?.name||'Auteur inconnu',
-      formats:b.formats, text:null
-    }));
-    if(results.length===0) throw new Error('empty');
-    renderBooks(results);
-    announce(`${results.length} livres trouvés. Appuyez sur un livre pour l'écouter.`);
-  } catch(e){
-    const q = (query||'').toLowerCase();
-    const filtered = q ? FALLBACK.filter(b=>b.title.toLowerCase().includes(q)||b.author.toLowerCase().includes(q)) : FALLBACK;
-    const res = filtered.length > 0 ? filtered : FALLBACK;
-    renderBooks(res);
-    announce(`${res.length} livres disponibles. Appuyez sur un livre pour l'écouter.`);
+function stopListening(){
+  isListening = false;
+  try{ if(recog) recog.stop(); } catch(e){}
+}
+
+// ROUTER PRINCIPAL
+function routeCommand(cmd){
+  // Commandes universelles
+  if(/(stop|arrête|arrêter|silence)/.test(cmd)){
+    speak('Lecture arrêtée.', function(){ stopRead(); startListening(); });
+    return;
   }
+  if(/(accueil|retour au menu|menu principal)/.test(cmd)){
+    speak('Retour à l\'accueil.', function(){ welcomeHome(); });
+    return;
+  }
+
+  // Selon le mode
+  if(currentMode === 'home') handleHome(cmd);
+  else if(currentMode === 'category') handleCategory(cmd);
+  else if(currentMode === 'results') handleResults(cmd);
+  else if(currentMode === 'confirm-book') handleConfirmBook(cmd);
+  else if(currentMode === 'reader') handleReaderMenu(cmd);
+  else if(currentMode === 'reading-active') handleReadingActive(cmd);
+  else if(currentMode === 'ai') handleAI(cmd);
 }
 
-function browseCategory(cat){
-  announce(`Catégorie : ${cat}`);
-  fetchBooks(null, cat);
+// DÉMARRAGE
+function startApp(){
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('app').classList.add('active');
+  loadVoices();
+  setTimeout(welcomeHome, 600);
 }
 
-function renderBooks(books){
-  const content = document.getElementById('lib-content');
-  content.innerHTML = '';
-  books.forEach((b,i)=>{
-    const btn = document.createElement('button');
-    btn.className = 'book-card';
-    btn.setAttribute('role','listitem');
-    btn.setAttribute('aria-label',`${b.title} par ${b.author}. Appuyez pour écouter.`);
-    btn.innerHTML = `
-      <div class="book-num">${i+1}</div>
-      <div class="book-info">
-        <div class="book-title">${b.title}</div>
-        <div class="book-author">${b.author}</div>
-      </div>`;
-    btn.onclick = () => openBook(b);
-    content.appendChild(btn);
+// ACCUEIL
+function welcomeHome(){
+  currentMode = 'home';
+  stopRead();
+  document.getElementById('reader-bar').classList.remove('visible');
+  document.getElementById('dark-overlay').classList.remove('active');
+  var bm = getBookmark();
+  var msg, hint;
+  if(bm){
+    msg = 'Bonjour. Tu es en mode aveugle. Tu as trois choix. '
+        + 'Premier choix : reprendre la lecture du livre en cours. '
+        + 'Deuxième choix : chercher un nouveau livre. '
+        + 'Troisième choix : parler avec ton compagnon IA. '
+        + 'Que veux-tu faire ?';
+    hint = '1. REPRENDRE LA LECTURE DU LIVRE EN COURS\n2. CHERCHER UN NOUVEAU LIVRE\n3. COMPAGNON IA';
+  } else {
+    msg = 'Bonjour. Tu es en mode aveugle. Tu as deux choix. '
+        + 'Premier choix : chercher un nouveau livre. '
+        + 'Deuxième choix : parler avec ton compagnon IA. '
+        + 'Que veux-tu faire ?';
+    hint = '1. CHERCHER UN NOUVEAU LIVRE\n2. COMPAGNON IA';
+  }
+  showHint(hint);
+  speak(msg);
+}
+
+function handleHome(cmd){
+  if(/(reprendre la lecture|reprendre|reprend|continuer|continue|premier choix|choix un|choix 1|un$|1$)/.test(cmd)){
+    doContinue();
+    return;
+  }
+  if(/(chercher|cherche|nouveau livre|bibliothèque|trouver|deuxième choix|choix deux|choix 2|deux$|2$)/.test(cmd)){
+    startBookSearch();
+    return;
+  }
+  if(/(assistant|compagnon|IA|intelligence|troisième choix|choix trois|choix 3|trois$|3$)/.test(cmd)){
+    startAI();
+    return;
+  }
+  speak('Je n\'ai pas compris. Dis : reprendre la lecture du livre en cours, chercher un nouveau livre, ou compagnon IA.');
+}
+
+// REPRENDRE
+function doContinue(){
+  var bm = getBookmark();
+  if(!bm){
+    speak('Aucun livre en cours. Je vais te proposer de chercher un livre.', function(){ startBookSearch(); });
+    return;
+  }
+  speak('Je charge ton livre. Un instant.', function(){
+    var book = { id: bm.bookId, title: bm.title, author: bm.author, formats: bm.formats, text: bm.text };
+    openBook(book, bm.chapterIdx, bm.wordIdx || 0);
   });
 }
 
-// ── READER ──
-let currentBook = null;
-let readWords = [];
-let isPlaying = false;
-let isPaused = false;
-let currentSpeed = 0.8;
-let readUtterance = null;
+// RECHERCHE
+function startBookSearch(){
+  currentMode = 'home';
+  speak('Quel livre ou auteur cherches-tu ? Parle maintenant.', function(){
+    currentMode = 'category';
+    startListening();
+  });
+  showHint('Dis un titre, un auteur, ou un genre');
+}
 
-async function openBook(b){
-  synth.cancel();
-  currentBook = b;
-  showScreen('reader');
-  document.getElementById('reader-title').textContent = b.title;
-  document.getElementById('reader-text').innerHTML = '<div class="loading-box"><div class="loading-icon">📖</div><p style="color:var(--dim);margin-top:16px">Chargement du livre…</p></div>';
-  document.getElementById('reader-status').textContent = 'Chargement…';
-  setProgress(0);
-  isPlaying = false; isPaused = false;
-  updatePlayBtn();
+function handleCategory(cmd){
+  if(/(roman|classique|fiction)/.test(cmd)){ fetchBooks(null,'roman','Romans'); return; }
+  if(/aventure/.test(cmd)){ fetchBooks(null,'aventure','Aventure'); return; }
+  if(/policier|polar|détective/.test(cmd)){ fetchBooks(null,'policier','Policier'); return; }
+  if(/philosophie/.test(cmd)){ fetchBooks(null,'philosophie','Philosophie'); return; }
+  if(/poésie|poesie/.test(cmd)){ fetchBooks(null,'poesie','Poésie'); return; }
+  if(/histoire/.test(cmd)){ fetchBooks(null,'histoire','Histoire'); return; }
+  fetchBooks(cmd, null, cmd);
+}
 
-  announce(`Chargement de ${b.title}. Veuillez patienter.`);
+var searchResults = [];
 
-  let text = b.text;
+function fetchBooks(query, topic, label){
+  speak('Recherche en cours. Un instant.', function(){});
+  var url = 'https://gutendex.com/books/?languages=fr,en&page_size=10';
+  if(query) url += '&search=' + encodeURIComponent(query);
+  if(topic) url += '&topic=' + encodeURIComponent(topic);
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    searchResults = (data.results||[]).map(function(b){
+      return { id: b.id, title: b.title, author: (b.authors&&b.authors[0])?b.authors[0].name:'Auteur inconnu', formats: b.formats, summary: SUMMARIES[b.title]||null };
+    });
+    if(!searchResults.length) throw new Error('empty');
+    currentMode = 'results';
+    announceResults();
+  }).catch(function(){
+    var q = (query||'').toLowerCase();
+    searchResults = q ? FALLBACK.filter(function(b){ return b.title.toLowerCase().includes(q)||b.author.toLowerCase().includes(q); }) : FALLBACK;
+    if(!searchResults.length) searchResults = FALLBACK;
+    currentMode = 'results';
+    announceResults();
+  });
+}
 
-  if(!text && b.formats){
-    const formats = b.formats;
-    const url = formats['text/plain; charset=utf-8'] || formats['text/plain; charset=us-ascii'] || formats['text/plain'] || Object.entries(formats).find(([k])=>k.startsWith('text/plain'))?.[1];
+function announceResults(){
+  var top = searchResults.slice(0,5);
+  var msg = 'J\'ai trouvé ' + searchResults.length + ' livres. ';
+  top.forEach(function(b,i){ msg += (i+1) + ' : ' + b.title + ' par ' + b.author + '. '; });
+  msg += 'Dis le numéro du livre pour entendre un résumé.';
+  var hint = '';
+  top.forEach(function(b,i){ hint += (i+1) + '. ' + b.title + '\n'; });
+  hint += '\nDis le numéro : UN, DEUX, TROIS…';
+  showHint(hint);
+  speak(msg);
+}
+
+function handleResults(cmd){
+  var numMap = {'un':0,'une':0,'premier':0,'1':0,'deux':1,'deuxième':1,'2':1,'trois':2,'troisième':2,'3':2,'quatre':3,'quatrième':3,'4':3,'cinq':4,'cinquième':4,'5':4};
+  for(var word in numMap){
+    if(cmd.includes(word) && searchResults[numMap[word]]){
+      describeBook(searchResults[numMap[word]]);
+      return;
+    }
+  }
+  if(/répète|liste/.test(cmd)){ announceResults(); return; }
+  if(/cherche|autre/.test(cmd)){ startBookSearch(); return; }
+  speak('Dis un numéro : un, deux, trois, quatre ou cinq. Ou dis répète pour réécouter la liste.');
+}
+
+// DESCRIPTION AVANT CHARGEMENT
+var pendingBook = null;
+function describeBook(book){
+  var summary = book.summary || 'Un grand classique de la littérature française.';
+  pendingBook = book;
+  currentMode = 'confirm-book';
+  var msg = book.title + ', par ' + book.author + '. ' + summary + '. Veux-tu écouter ce livre ? Dis OUI pour commencer ou NON pour en choisir un autre.';
+  showHint('OUI pour écouter · NON pour choisir un autre');
+  speak(msg);
+}
+
+function handleConfirmBook(cmd){
+  if(/(oui|ok|yes|lancer|commencer|parfait|aller|d'accord)/.test(cmd)){
+    speak('Très bien. Je charge le livre.', function(){ openBook(pendingBook, 0, 0); });
+    return;
+  }
+  if(/(non|autre|changer|pas celui|différent)/.test(cmd)){
+    speak('D\'accord. Voici la liste.', function(){ currentMode = 'results'; announceResults(); });
+    return;
+  }
+  speak('Dis OUI pour écouter ce livre, ou NON pour en choisir un autre.');
+}
+
+// LECTEUR
+var currentBook = null;
+var currentChapters = [];
+var currentChapterIdx = 0;
+var currentWordIdx = 0;
+var isPlaying = false;
+var isPaused = false;
+var progressTimer = null;
+
+function openBook(book, startChapter, startWord){
+  currentBook = book;
+  currentChapterIdx = startChapter || 0;
+  currentWordIdx = startWord || 0;
+  isPlaying = false;
+  isPaused = false;
+
+  var text = book.text;
+
+  if(!text && book.formats){
+    var fmts = book.formats;
+    var url = fmts['text/plain; charset=utf-8'] || fmts['text/plain; charset=us-ascii'] || fmts['text/plain'];
+    if(!url){
+      var keys = Object.keys(fmts);
+      for(var k=0;k<keys.length;k++){
+        if(keys[k].startsWith('text/plain')){ url = fmts[keys[k]]; break; }
+      }
+    }
     if(url){
-      try{
-        const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-        const r = await fetch(proxy);
-        if(r.ok){
-          let raw = await r.text();
-          const start = raw.indexOf('*** START OF');
-          const end = raw.indexOf('*** END OF');
-          if(start!==-1) raw=raw.slice(raw.indexOf('\n',start)+1);
-          if(end!==-1) raw=raw.slice(0,end);
-          text = raw.replace(/\r\n|\r/g,' ').replace(/\n/g,' ').replace(/\s+/g,' ').slice(0,12000).trim();
-        }
-      } catch(e){}
+      fetch('https://corsproxy.io/?' + encodeURIComponent(url)).then(function(r){ return r.text(); }).then(function(raw){
+        var s = raw.indexOf('*** START OF');
+        var e = raw.indexOf('*** END OF');
+        if(s !== -1) raw = raw.slice(raw.indexOf('\n', s)+1);
+        if(e !== -1) raw = raw.slice(0, e);
+        text = raw.replace(/\r\n|\r/g,'\n').trim();
+        currentBook.text = text;
+        currentChapters = splitChapters(text);
+        if(!currentChapters.length) currentChapters = [{title:'Lecture',text:text}];
+        finishOpenBook(startChapter, startWord);
+      }).catch(function(){
+        useFallback(book, startChapter, startWord);
+      });
+      return;
     }
   }
 
-  if(!text){
-    const fb = FALLBACK.find(f=>f.title===b.title);
-    text = fb?.text || `${b.title}, par ${b.author}. Ce livre classique fait partie du domaine public.`;
+  if(!text) useFallback(book, startChapter, startWord);
+  else{
+    currentBook.text = text;
+    currentChapters = splitChapters(text);
+    if(!currentChapters.length) currentChapters = [{title:'Lecture',text:text}];
+    finishOpenBook(startChapter, startWord);
   }
-
-  currentBook.text = text;
-  readWords = text.split(/\s+/);
-
-  const container = document.getElementById('reader-text');
-  container.innerHTML = readWords.map((w,i)=>`<span class="word" id="w${i}">${w} </span>`).join('');
-
-  announce(`${b.title} est prêt. Appuyez sur le grand bouton doré pour commencer la lecture.`);
-  document.getElementById('reader-status').textContent = 'Appuyez sur ▶ pour commencer';
 }
 
-function togglePlay(){
-  if(!currentBook?.text) return;
-  if(!isPlaying && !isPaused){ startRead(); }
-  else if(isPlaying && !isPaused){ pauseRead(); }
-  else if(isPaused){ resumeRead(); }
+function useFallback(book, startChapter, startWord){
+  var fb = FALLBACK.find(function(f){ return f.title === book.title || f.id === book.id; });
+  var text = fb ? fb.text : (book.title + ' par ' + book.author + '.');
+  currentBook.text = text;
+  currentChapters = splitChapters(text);
+  if(!currentChapters.length) currentChapters = [{title:'Lecture',text:text}];
+  finishOpenBook(startChapter, startWord);
+}
+
+function finishOpenBook(startChapter, startWord){
+  currentChapterIdx = startChapter || 0;
+  currentWordIdx = startWord || 0;
+  document.getElementById('reader-bar').classList.add('visible');
+  document.getElementById('reader-book-title').textContent = currentBook.title.toUpperCase();
+  updateReaderBar();
+  currentMode = 'reader';
+
+  // Annoncer position exacte si reprise
+  var ch = currentChapters[currentChapterIdx];
+  var chName = ch ? (ch.title || ('Chapitre ' + (currentChapterIdx+1))) : 'Chapitre 1';
+  var msg;
+
+  if(currentWordIdx > 0 && ch){
+    var words = ch.text.split(/\s+/);
+    var snippet = words.slice(currentWordIdx, currentWordIdx+10).join(' ');
+    msg = 'Ton livre est prêt. '
+        + 'Tu reprends au ' + chName + '. '
+        + 'Tu t\'étais arrêté sur ces mots : ' + snippet + '. '
+        + 'Dis LIRE pour continuer exactement ici.';
+  } else {
+    msg = 'Ton livre est prêt. '
+        + currentBook.title + ' par ' + currentBook.author + '. '
+        + currentChapters.length + ' chapitre' + (currentChapters.length > 1 ? 's' : '') + '. '
+        + 'Dis LIRE pour commencer depuis le début.';
+  }
+
+  showHint('LIRE · MARQUE-PAGE · SUIVANT · PRÉCÉDENT · ACCUEIL');
+  speak(msg, function(){ startListening(); });
+}
+
+function updateReaderBar(){
+  var ch = currentChapters[currentChapterIdx];
+  document.getElementById('reader-chapter-info').textContent = (ch ? (ch.title || '') : '') + ' — Ch.' + (currentChapterIdx+1) + '/' + currentChapters.length;
+}
+
+function splitChapters(text){
+  var patterns = [/\n\s*chapitre\s+\w+[.\s]/gi, /\n\s*chapter\s+\w+[.\s]/gi, /\n\s*livre\s+\w+[.\s]/gi];
+  for(var p=0;p<patterns.length;p++){
+    var parts = text.split(patterns[p]);
+    if(parts.length > 2){
+      var re = new RegExp(patterns[p].source, 'gi');
+      var titles = [];
+      var m;
+      while((m = re.exec(text)) !== null) titles.push(m[0].trim());
+      var chs = parts.slice(1).map(function(pt, i){ return {title: titles[i]||('Chapitre '+(i+1)), text: pt.trim()}; }).filter(function(c){ return c.text.length > 50; });
+      if(chs.length > 1) return chs;
+    }
+  }
+  var words = text.split(/\s+/);
+  var chunks = [];
+  for(var i=0;i<words.length;i+=1800){
+    chunks.push({title:'Partie '+(Math.floor(i/1800)+1), text: words.slice(i,i+1800).join(' ')});
+  }
+  return chunks;
+}
+
+function handleReaderMenu(cmd){
+  if(/(lire|lis|lancer|commencer|play|démarrer)/.test(cmd)){
+    speak('Je commence la lecture.', function(){ startRead(); });
+    return;
+  }
+  if(/(marque|signet|bookmark)/.test(cmd)){
+    speak('Marque-page enregistré.', function(){ saveBookmark(); startListening(); });
+    return;
+  }
+  if(/(suivant|chapitre suivant)/.test(cmd)){
+    speak('Chapitre suivant.', function(){ nextChapter(); });
+    return;
+  }
+  if(/(précédent|chapitre précédent)/.test(cmd)){
+    speak('Chapitre précédent.', function(){ prevChapter(); });
+    return;
+  }
+  if(/(progression|où en suis|avancement)/.test(cmd)){
+    announceProgress();
+    return;
+  }
+  speak('Dis LIRE pour commencer, ou ACCUEIL pour revenir au menu.');
+}
+
+function handleReadingActive(cmd){
+  if(/(pause|pauser|arrête de lire)/.test(cmd)){
+    speak('Mise en pause.', function(){ pauseRead(); });
+    return;
+  }
+  if(/(stop|arrête|silence)/.test(cmd)){
+    speak('Lecture arrêtée.', function(){ stopRead(); currentMode = 'reader'; startListening(); });
+    return;
+  }
+  if(/(suivant|chapitre suivant)/.test(cmd)){
+    speak('Chapitre suivant.', function(){ nextChapter(); });
+    return;
+  }
+  if(/(précédent|chapitre précédent)/.test(cmd)){
+    speak('Chapitre précédent.', function(){ prevChapter(); });
+    return;
+  }
+  if(/(marque|signet|bookmark)/.test(cmd)){
+    speak('Marque-page enregistré.', function(){ saveBookmark(); setTimeout(listenDuringRead, 500); });
+    return;
+  }
+  if(/(plus vite|rapide|accélérer)/.test(cmd)){
+    readSpeed = 1.3;
+    speak('Lecture rapide.', function(){ stopRead(); startRead(); });
+    return;
+  }
+  if(/(plus lentement|lentement|lent|ralentir)/.test(cmd)){
+    readSpeed = 0.7;
+    speak('Lecture lente.', function(){ stopRead(); startRead(); });
+    return;
+  }
+  if(/(vitesse normale|normal)/.test(cmd)){
+    readSpeed = 0.88;
+    speak('Vitesse normale.', function(){ stopRead(); startRead(); });
+    return;
+  }
+  if(/(progression|où en suis|avancement)/.test(cmd)){
+    announceProgress();
+    return;
+  }
 }
 
 function startRead(){
-  if(!currentBook?.text) return;
+  var ch = currentChapters[currentChapterIdx];
+  if(!ch) return;
   synth.cancel();
-  const text = currentBook.text;
-  const ws = text.split(/\s+/);
-  const u = new SpeechSynthesisUtterance(text);
-  if(currentVoice) u.voice = currentVoice;
-  u.rate = currentSpeed;
-  u.lang = currentVoice?.lang||'fr-FR';
-  let wc=0;
-  u.onboundary = e => {
-    if(e.name==='word'){
-      const prev = document.getElementById(`w${wc-1}`);
-      if(prev){ prev.classList.remove('active'); prev.classList.add('done'); }
-      const cur = document.getElementById(`w${wc}`);
-      if(cur){ cur.classList.add('active'); cur.scrollIntoView({block:'center',behavior:'smooth'}); }
-      setProgress(Math.round(wc/ws.length*100));
-      wc++;
+  stopListening();
+  currentMode = 'reading-active';
+  isPlaying = true;
+  isPaused = false;
+
+  var allWords = ch.text.split(/\s+/);
+  var startText = currentWordIdx > 0 ? allWords.slice(currentWordIdx).join(' ') : ch.text;
+
+  var u = new SpeechSynthesisUtterance(startText);
+  if(femaleVoice) u.voice = femaleVoice;
+  u.rate = readSpeed;
+  u.pitch = 1.08;
+  u.lang = femaleVoice ? femaleVoice.lang : 'fr-FR';
+
+  u.onboundary = function(e){
+    if(e.name === 'word'){
+      currentWordIdx++;
+      var pct = Math.round(currentWordIdx / allWords.length * 100);
+      document.getElementById('reader-pf').style.width = pct + '%';
     }
   };
-  u.onend = ()=>{
-    isPlaying=false; isPaused=false;
-    updatePlayBtn();
-    setProgress(100);
-    document.getElementById('reader-status').textContent = '✓ Lecture terminée';
-    announce('Lecture terminée.');
+
+  u.onend = function(){
+    isPlaying = false;
+    isPaused = false;
+    clearInterval(progressTimer);
+    if(currentChapterIdx < currentChapters.length-1){
+      currentChapterIdx++;
+      currentWordIdx = 0;
+      updateReaderBar();
+      document.getElementById('reader-pf').style.width = '0%';
+      wakeScreen();
+      currentMode = 'reader';
+      speak('Chapitre ' + currentChapterIdx + ' terminé. Chapitre ' + (currentChapterIdx+1) + ' : ' + (currentChapters[currentChapterIdx].title||'') + '. Dis LIRE pour continuer.');
+    } else {
+      wakeScreen();
+      speak('Livre terminé. Félicitations ! Retour à l\'accueil.', function(){ welcomeHome(); });
+    }
   };
-  readUtterance = u;
+
   synth.speak(u);
-  isPlaying=true; isPaused=false;
-  updatePlayBtn();
-  document.getElementById('reader-status').textContent = '▶ Lecture en cours…';
+  isSpeaking = false;
+  setMicState('listening');
+  document.getElementById('main-speech').textContent = 'Lecture : ' + (ch.title||'');
+  showHint('PAUSE · STOP · SUIVANT · MARQUE-PAGE · PROGRESSION');
+
+  // Écran noir après 15 secondes
+  setTimeout(function(){ if(isPlaying) document.getElementById('dark-overlay').classList.add('active'); }, 15000);
+
+  // Progression toutes les 10 minutes
+  clearInterval(progressTimer);
+  progressTimer = setInterval(function(){
+    if(isPlaying && !isPaused){
+      var pct = Math.round(currentWordIdx / allWords.length * 100);
+      synth.pause();
+      var u2 = new SpeechSynthesisUtterance('Chapitre ' + (currentChapterIdx+1) + ' sur ' + currentChapters.length + '. ' + pct + ' pourcent du chapitre.');
+      if(femaleVoice) u2.voice = femaleVoice;
+      u2.rate = 0.9; u2.pitch = 1.1;
+      u2.onend = function(){ synth.resume(); };
+      synth.speak(u2);
+    }
+  }, 600000);
+
+  setTimeout(listenDuringRead, 1000);
 }
 
-function pauseRead(){ synth.pause(); isPaused=true; isPlaying=false; updatePlayBtn(); document.getElementById('reader-status').textContent='⏸ En pause'; announce('Pause.'); }
-function resumeRead(){ synth.resume(); isPaused=false; isPlaying=true; updatePlayBtn(); document.getElementById('reader-status').textContent='▶ Lecture en cours…'; announce('Lecture reprise.'); }
-function stopRead(){ synth.cancel(); isPlaying=false; isPaused=false; updatePlayBtn(); setProgress(0); document.getElementById('reader-status').textContent='Arrêté.'; }
-function restartRead(){ stopRead(); setTimeout(startRead,200); announce('Recommencer depuis le début.'); }
-
-function updatePlayBtn(){
-  const btn = document.getElementById('play-btn');
-  if(!btn) return;
-  if(isPlaying){ btn.textContent='⏸'; btn.classList.add('playing'); btn.setAttribute('aria-label','Mettre en pause'); }
-  else { btn.textContent='▶'; btn.classList.remove('playing'); btn.setAttribute('aria-label', isPaused?'Reprendre':'Lire le livre'); }
+function listenDuringRead(){
+  if(!isPlaying || !SR) return;
+  var r = new SR();
+  r.lang = 'fr-FR'; r.interimResults = false; r.maxAlternatives = 1;
+  r.onresult = function(e){
+    var cmd = e.results[0][0].transcript.toLowerCase();
+    routeCommand(cmd);
+  };
+  r.onend = function(){ if(isPlaying) setTimeout(listenDuringRead, 500); };
+  try{ r.start(); } catch(e){}
 }
 
-function setProgress(p){
-  const fill = document.getElementById('progress-fill');
-  const bar = document.getElementById('progress-bar');
-  if(fill) fill.style.width=p+'%';
-  if(bar) bar.setAttribute('aria-valuenow',p);
+function pauseRead(){
+  synth.pause();
+  isPaused = true;
+  isPlaying = false;
+  clearInterval(progressTimer);
+  currentMode = 'reader';
+  wakeScreen();
+  showHint('REPRENDRE · STOP · ACCUEIL');
+  setTimeout(startListening, 500);
 }
 
-function setSpeed(s){
-  currentSpeed = s;
-  document.querySelectorAll('.speed-btn').forEach(b=>b.classList.remove('active'));
-  const btn = document.getElementById(`spd-${s}`);
-  if(btn) btn.classList.add('active');
-  announce(`Vitesse : ${s === 0.8 ? 'lente' : s===1?'normale':s===1.3?'rapide':'très rapide'}`);
-  if(isPlaying){ stopRead(); setTimeout(startRead,100); }
+function resumeRead(){
+  synth.resume();
+  isPaused = false;
+  isPlaying = true;
+  currentMode = 'reading-active';
+  setMicState('listening');
+  isSpeaking = false;
+  document.getElementById('main-speech').textContent = 'Lecture en cours…';
+  showHint('PAUSE · STOP · SUIVANT · MARQUE-PAGE');
+  setTimeout(function(){ if(isPlaying) document.getElementById('dark-overlay').classList.add('active'); }, 15000);
+  setTimeout(listenDuringRead, 500);
 }
 
-// ── AI ASSISTANT ──
-const AI_RESPONSES = [
-  { keywords:['bonjour','salut','hello'], response:'Bonjour ! Je suis votre assistant VocaBook. Je peux vous recommander des livres, vous parler d\'un auteur, ou vous aider à choisir votre prochaine lecture. Que souhaitez-vous ?' },
-  { keywords:['victor hugo','hugo'], response:'Victor Hugo est l\'un des plus grands écrivains français. Ses œuvres majeures sont Les Misérables, Notre-Dame de Paris, et les Contemplations. Je vous recommande de commencer par Les Misérables, une épopée humaine magnifique.' },
-  { keywords:['recommande','conseil','quoi lire','choisir'], response:'Je vous recommande Les Misérables de Victor Hugo pour une aventure humaine profonde, Le Petit Prince de Saint-Exupéry pour une lecture poétique et touchante, ou Le Comte de Monte-Cristo de Dumas pour du suspense et de l\'aventure. Qu\'est-ce qui vous attire le plus ?' },
-  { keywords:['aventure','action','suspense'], response:'Pour l\'aventure, je vous recommande Le Comte de Monte-Cristo d\'Alexandre Dumas, ou Vingt mille lieues sous les mers de Jules Verne. Deux chefs-d\'œuvre palpitants que vous pouvez écouter maintenant dans notre bibliothèque.' },
-  { keywords:['triste','émotion','toucher','pleurer'], response:'Si vous aimez les histoires émouvantes, Les Misérables de Victor Hugo vous touchera profondément. Germinal d\'Émile Zola sur la misère des mineurs est aussi très fort. Et Le Petit Prince est un conte déchirant sur l\'amour et la perte.' },
-  { keywords:['court','rapide','petit'], response:'Pour une lecture courte, je vous recommande Le Petit Prince de Saint-Exupéry ou L\'Étranger d\'Albert Camus. Ce sont deux œuvres brèves mais d\'une profondeur extraordinaire.' },
-  { keywords:['philosophie','réfléchir','sens','vie'], response:'Pour la philosophie, Candide de Voltaire est parfait : drôle et profond à la fois. L\'Étranger de Camus pose des questions essentielles sur le sens de la vie. Et Les Fleurs du Mal de Baudelaire est une méditation poétique sur l\'existence.' },
-  { keywords:['aveugle','malvoyant','accessib'], response:'VocaBook est conçu spécialement pour les personnes malvoyantes et aveugles. Tous les livres se lisent automatiquement à voix haute. Vous n\'avez besoin que d\'un doigt pour tout faire.' },
-  { keywords:['merci','super','bien','bravo','excellent'], response:'C\'est un plaisir de vous aider ! La lecture doit être accessible à tous. N\'hésitez pas à me demander une recommandation à tout moment.' },
+function stopRead(){
+  synth.cancel();
+  isPlaying = false;
+  isPaused = false;
+  isSpeaking = false;
+  clearInterval(progressTimer);
+  wakeScreen();
+}
+
+function nextChapter(){
+  if(currentChapterIdx < currentChapters.length-1){
+    stopRead();
+    currentChapterIdx++;
+    currentWordIdx = 0;
+    updateReaderBar();
+    document.getElementById('reader-pf').style.width = '0%';
+    currentMode = 'reader';
+    var ch = currentChapters[currentChapterIdx];
+    speak('Chapitre ' + (currentChapterIdx+1) + ' : ' + (ch.title||'') + '. Dis LIRE pour commencer.');
+  } else {
+    speak('C\'est le dernier chapitre.');
+  }
+}
+
+function prevChapter(){
+  if(currentChapterIdx > 0){
+    stopRead();
+    currentChapterIdx--;
+    currentWordIdx = 0;
+    updateReaderBar();
+    document.getElementById('reader-pf').style.width = '0%';
+    currentMode = 'reader';
+    var ch = currentChapters[currentChapterIdx];
+    speak('Chapitre ' + (currentChapterIdx+1) + ' : ' + (ch.title||'') + '. Dis LIRE pour commencer.');
+  } else {
+    speak('C\'est le premier chapitre.');
+  }
+}
+
+function announceProgress(){
+  if(!currentBook){ speak('Aucune lecture en cours.'); return; }
+  var ch = currentChapters[currentChapterIdx];
+  var total = ch ? ch.text.split(/\s+/).length : 1;
+  var pct = Math.round(currentWordIdx / total * 100);
+  speak('Tu es au chapitre ' + (currentChapterIdx+1) + ' sur ' + currentChapters.length + ', à ' + pct + ' pourcent du chapitre en cours.');
+}
+
+function wakeScreen(){
+  document.getElementById('dark-overlay').classList.remove('active');
+}
+
+// MARQUE-PAGE
+function getBookmark(){
+  try{ return JSON.parse(localStorage.getItem('vb_bm')); } catch(e){ return null; }
+}
+
+function saveBookmark(){
+  if(!currentBook) return;
+  var bm = {
+    bookId: currentBook.id,
+    title: currentBook.title,
+    author: currentBook.author,
+    chapterIdx: currentChapterIdx,
+    wordIdx: currentWordIdx,
+    formats: currentBook.formats || null,
+    text: currentBook.text || null,
+    savedAt: new Date().toLocaleDateString('fr-FR')
+  };
+  localStorage.setItem('vb_bm', JSON.stringify(bm));
+  showToast('🔖 Marque-page enregistré !');
+  var ch = currentChapters[currentChapterIdx];
+  var total = ch ? ch.text.split(/\s+/).length : 1;
+  var pct = Math.round(currentWordIdx / total * 100);
+  speak('Marque-page enregistré. ' + (ch ? (ch.title||'Chapitre '+(currentChapterIdx+1)) : '') + ', à ' + pct + ' pourcent. Tu reprendras exactement ici.');
+}
+
+// IA
+var AI_KB = [
+  {k:['bonjour','salut','hello'],r:'Bonjour ! Je suis ton compagnon IA VocaBook. Je peux te recommander des livres, te parler d\'un auteur, ou t\'aider à utiliser l\'application.'},
+  {k:['recommande','conseil','quoi lire','choisir'],r:'Je te recommande Les Misérables de Victor Hugo pour une aventure profonde, Le Petit Prince de Saint-Exupéry pour de la poésie, ou Le Comte de Monte-Cristo de Dumas pour du suspense.'},
+  {k:['victor hugo','hugo'],r:'Victor Hugo est l\'un des plus grands auteurs français. Ses œuvres majeures sont Les Misérables, Notre-Dame de Paris, et Quatre-vingt-treize.'},
+  {k:['aventure','action','suspense'],r:'Pour l\'aventure, Le Comte de Monte-Cristo d\'Alexandre Dumas est excellent. Ou Vingt mille lieues sous les mers de Jules Verne.'},
+  {k:['marque','reprendre','position'],r:'Pendant la lecture, dis MARQUE-PAGE. VocaBook sauvegarde le mot exact. À ta prochaine visite, dis reprendre la lecture du livre en cours.'},
+  {k:['comment','utiliser','aide'],r:'Dis reprendre la lecture pour continuer ton livre, chercher un livre pour en trouver un nouveau, et lire pendant la lecture pour écouter. Dis pause pour s\'arrêter, marque-page pour sauvegarder.'},
+  {k:['vitesse','lent','rapide'],r:'Pendant la lecture, dis plus vite pour accélérer, plus lentement pour ralentir, ou vitesse normale.'},
+  {k:['progression','où'],r:'Pendant la lecture, dis progression. Je te dirai ton chapitre et ton pourcentage d\'avancement.'},
+  {k:['merci','super','bien','bravo'],r:'C\'est un plaisir. La lecture doit être accessible à tous.'},
 ];
 
-function greetAI(){
-  const msg = 'Bonjour ! Je suis votre assistant VocaBook. Appuyez sur le micro et posez-moi une question sur les livres.';
-  addAIMessage(msg, 'bot');
-  announce(msg);
+function startAI(){
+  currentMode = 'ai';
+  speak('Bonjour, je suis ton compagnon IA. Pose-moi ta question.', function(){ startListening(); });
+  showHint('Pose ta question à voix haute');
 }
 
-function addAIMessage(text, role){
-  const box = document.getElementById('ai-messages');
-  const div = document.createElement('div');
-  div.className = `ai-msg ${role}`;
-  div.innerHTML = `
-    <div class="ai-avatar ${role==='bot'?'bot':'user'}">${role==='bot'?'🤖':'👤'}</div>
-    <div class="ai-bubble ${role==='bot'?'bot':'user'}">${text}</div>`;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-}
-
-function getAIResponse(query){
-  const q = query.toLowerCase();
-  for(const item of AI_RESPONSES){
-    if(item.keywords.some(k=>q.includes(k))) return item.response;
+function handleAI(cmd){
+  var lower = cmd.toLowerCase();
+  var resp = null;
+  for(var i=0;i<AI_KB.length;i++){
+    var found = false;
+    for(var j=0;j<AI_KB[i].k.length;j++){
+      if(lower.includes(AI_KB[i].k[j])){ found = true; break; }
+    }
+    if(found){ resp = AI_KB[i].r; break; }
   }
-  return `Je n'ai pas bien compris "${query}". Vous pouvez me demander une recommandation de livre, des infos sur un auteur, ou de l'aide pour choisir votre prochaine lecture.`;
+  if(!resp) resp = 'Je n\'ai pas bien compris. Tu peux me demander une recommandation de livre, des infos sur un auteur, ou comment utiliser VocaBook.';
+  speak(resp, function(){ currentMode = 'ai'; showHint('Pose une autre question ou dis ACCUEIL'); startListening(); });
 }
 
-function startAIVoice(){
-  synth.cancel();
-  const btn = document.getElementById('ai-mic');
-  const hint = document.getElementById('ai-hint');
+// RÉSUMÉS
+var SUMMARIES = {
+  'Les Misérables': 'Jean Valjean, ancien forçat, cherche la rédemption dans une France déchirée entre injustice et espoir. Une épopée bouleversante sur l\'humanité.',
+  'Le Petit Prince': 'Un aviateur rencontre dans le désert un mystérieux petit garçon venu des étoiles, porteur d\'une sagesse profonde sur l\'amour et la vie.',
+  'Candide': 'Candide, jeune homme naïf, traverse le monde et ses catastrophes en s\'interrogeant sur si tout est vraiment pour le mieux. Un conte philosophique plein d\'ironie.',
+  'Le Comte de Monte-Cristo': 'Edmond Dantès, emprisonné injustement pendant quatorze ans, s\'évade et revient riche et mystérieux pour se venger.',
+  'Madame Bovary': 'Emma Bovary rêve d\'une vie passionnée et romantique, et se perd dans des illusions qui la mèneront à la tragédie.',
+  'Germinal': 'Dans les mines du nord de la France, Étienne Lantier découvre la misère des ouvriers et organise une grève au risque de tout perdre.',
+};
 
-  // Bouton rouge = écoute
-  btn.style.background = 'radial-gradient(circle at 38% 32%,#ff4466,#660022)';
-  btn.style.boxShadow = '0 0 0 16px rgba(255,68,102,0.15),0 0 60px rgba(255,68,102,0.5)';
-  btn.style.animation = 'pulse-red 0.7s ease-in-out infinite';
-  btn.innerHTML = '<span>🔴</span><span style="font-size:12px;font-weight:700;letter-spacing:2px;font-family:\'Segoe UI\',Arial,sans-serif;">ÉCOUTE…</span>';
-  hint.textContent = 'Je vous écoute… parlez maintenant';
-  hint.style.color = 'var(--red)';
-
-  function resetBtn(){
-    btn.style.background = 'radial-gradient(circle at 38% 32%,#00e5ff,#003366)';
-    btn.style.boxShadow = '0 0 0 0 rgba(0,229,255,0.4),0 0 50px rgba(0,229,255,0.35)';
-    btn.style.animation = 'breathe 3s ease-in-out infinite';
-    btn.innerHTML = '<span>🎙</span><span style="font-size:12px;font-weight:700;letter-spacing:2px;font-family:\'Segoe UI\',Arial,sans-serif;">PARLER</span>';
-    hint.style.color = 'var(--cyan)';
-    hint.textContent = 'Appuyez sur le bouton et posez votre question';
-  }
-
-  const rec = buildRecognition('fr-FR', query => {
-    resetBtn();
-    addAIMessage(query, 'user');
-    setTimeout(()=>{
-      const response = getAIResponse(query);
-      addAIMessage(response, 'bot');
-      announce(response);
-    }, 300);
-  }, ()=>{
-    resetBtn();
-    hint.textContent = 'Je n\'ai pas compris. Réessayez.';
-    announce('Je n\'ai pas compris. Réessayez.');
-  });
-
-  if(!rec){
-    resetBtn();
-    announce('Recherche vocale non disponible sur ce navigateur. Utilisez Chrome.');
-    return;
-  }
-  rec.start();
-}
+// LIVRES DE SECOURS
+var FALLBACK = [
+  {id:1,title:'Les Misérables',author:'Victor Hugo',summary:SUMMARIES['Les Misérables'],text:'Chapitre Premier. Jean Valjean.\nEn 1815, Monsieur Myriel était évêque de Digne. C\'était un vieillard d\'environ soixante-quinze ans. Il occupait le siège de Digne depuis 1806. Vrai ou faux, ce qu\'on dit des hommes tient souvent autant de place dans leur vie que ce qu\'ils font. Monsieur Myriel était fils d\'un conseiller au parlement d\'Aix. Charles Myriel avait beaucoup fait parler de lui. Il était bien fait de sa personne, élégant, gracieux, spirituel. La Révolution survint. Monsieur Charles Myriel émigra en Italie. Sa femme y mourut d\'une maladie de poitrine. Ils n\'avaient pas d\'enfants. Tout ce qu\'on savait c\'est que lorsqu\'il revint d\'Italie il était prêtre.\n\nChapitre Deux. Monseigneur Bienvenu.\nEn 1806, Monsieur Myriel était curé de Brignolles. Il était vieux déjà et vivait en profonde retraite. Vers l\'époque du couronnement, une petite affaire de sa cure l\'amena à Paris. Un jour que l\'empereur était venu faire visite à son oncle, le digne curé se trouva sur le passage de Sa Majesté. Napoléon se retourna et dit : Quel est ce bonhomme qui me regarde ? Monseigneur, dit Monsieur Myriel, vous regardez un bonhomme, et moi je regarde un grand homme. Chacun de nous peut profiter.'},
+  {id:2,title:'Le Petit Prince',author:'Antoine de Saint-Exupéry',summary:SUMMARIES['Le Petit Prince'],text:'Chapitre Premier.\nLorsque j\'avais six ans j\'ai vu une magnifique image dans un livre sur la Forêt Vierge. Ça représentait un serpent boa qui avalait un fauve. On disait : les serpents boas avalent leur proie tout entière sans la mâcher. J\'ai réussi à tracer mon premier dessin. J\'ai montré mon chef-d\'œuvre aux grandes personnes et je leur ai demandé si mon dessin leur faisait peur. Elles m\'ont répondu : Pourquoi un chapeau ferait-il peur ? Mon dessin ne représentait pas un chapeau mais un serpent boa qui digérait un éléphant. Les grandes personnes m\'ont conseillé de laisser de côté les dessins de serpents et de m\'intéresser à la géographie, à l\'histoire, au calcul et à la grammaire. C\'est ainsi que j\'ai abandonné à l\'âge de six ans une magnifique carrière de peintre.\n\nChapitre Deux.\nJ\'ai ainsi vécu seul sans personne avec qui parler jusqu\'à une panne dans le désert du Sahara il y a six ans. Quelque chose s\'était cassé dans mon moteur. J\'avais à peine de l\'eau à boire pour huit jours. Le premier soir je me suis endormi sur le sable à mille milles de toute terre habitée. Alors vous imaginez ma surprise au lever du jour quand une drôle de petite voix m\'a réveillé. Elle disait : S\'il vous plaît dessine-moi un mouton.'},
+  {id:3,title:'Candide',author:'Voltaire',summary:SUMMARIES['Candide'],text:'Chapitre Premier. Comment Candide fut élevé dans un beau château.\nIl y avait en Westphalie dans le château de Monsieur le baron de Thunder-ten-tronckh un jeune garçon à qui la nature avait donné les mœurs les plus douces. Sa physionomie annonçait son âme. Il avait le jugement assez droit avec l\'esprit le plus simple. C\'est pour cette raison qu\'on le nommait Candide. Monsieur le baron était un des plus puissants seigneurs de la Westphalie car son château avait une porte et des fenêtres. Ils l\'appelaient tous monseigneur et ils riaient quand il faisait des contes.\n\nChapitre Deux. Ce qui advint à Candide parmi les Bulgares.\nCandide chassé du paradis terrestre marcha longtemps sans savoir où. Il se coucha sans souper au milieu des champs entre deux sillons. La neige tombait à gros flocons. Candide transi de froid se traîna le lendemain vers la ville voisine. Deux hommes habillés de bleu le remarquèrent. Voilà un jeune homme très bien fait dit l\'un. Ils s\'avancèrent vers Candide et le prièrent à dîner très civilement.'},
+  {id:4,title:'Le Comte de Monte-Cristo',author:'Alexandre Dumas',summary:SUMMARIES['Le Comte de Monte-Cristo'],text:'Chapitre Premier. Marseille, l\'arrivée.\nLe 24 février 1815 la vigie de Notre-Dame de la Garde signala le trois-mâts le Pharaon venant de Smyrne Trieste et Naples. C\'était Edmond Dantès second du navire le Pharaon jeune homme de dix-neuf à vingt ans au visage ouvert et beau aux yeux noirs et perçants dont toute la personne respirait ce calme et cette résolution particulières aux hommes habitués depuis leur enfance à lutter avec le danger.\n\nChapitre Deux. Le père et le fils.\nMonsieur Morrel alla à Dantès. Dantès, lui dit-il, j\'ai su la mort du capitaine Leclère. C\'était un brave et honnête homme. Qu\'avez-vous fait de si particulier pour que le capitaine vous ait remis le commandement ? Rien que mon devoir monsieur répondit Dantès. J\'ai eu l\'honneur d\'être à la hauteur des circonstances. Dantès parlait avec cette tranquille assurance qui caractérise les hommes habitués à regarder le danger en face.'},
+  {id:5,title:'Germinal',author:'Émile Zola',summary:SUMMARIES['Germinal'],text:'Chapitre Premier.\nDans la plaine rase sous la nuit sans étoiles un homme suivait seul la grande route de Marchiennes à Montsou. Il ne voyait même pas le sol noir devant lui. Ce mineur sans travail que la misère chassait de ville en ville ne se reconnaissait pas dans ce pays plat du nord de la France. Il marchait depuis longtemps les jambes rompues de fatigue l\'estomac vide.\n\nChapitre Deux.\nÉtienne Lantier s\'approcha enfin et aperçut les feux. C\'était une fosse, la mine de Montsou qui flambait dans la nuit. Tout un coin du ciel était éclairé. Des hommes montaient et descendaient portant des lampes. Il s\'avança vers un vieux mineur assis sur une borne. Dites donc père est-ce qu\'on n\'embaucherait pas ici ?'},
+];
 </script>
 
 </body>
