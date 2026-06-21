@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+<title>VocaBook</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  height:100%;background:#0A0A0A;color:#F5F5F0;
+  font-family:'Segoe UI',system-ui,sans-serif;
+  overflow:hidden;-webkit-tap-highlight-color:transparent;
+}
+
+/* ÉCRAN DÉMARRAGE */
+#screen-start{
+position:fixed;inset:0;background:#0A0A0A;
+display:flex;flex-direction:column;
+align-items:center;justify-content:center;
+gap:28px;padding:40px;cursor:pointer;z-index:999;
+}
+#screen-start .ico{font-size:110px;}
+#screen-start h1{font-size:40px;font-weight:900;color:#D4A017;}
+#screen-start p{font-size:20px;line-height:1.9;color:#F5F5F0;text-align:center;font-weight:600;}
+#screen-start .hint{font-size:17px;color:#9A9A94;}
+
+/* APP */
+#screen-app{
+display:none;position:fixed;inset:0;
+flex-direction:column;align-items:center;
+justify-content:space-between;
+padding:44px 28px calc(env(safe-area-inset-bottom)+24px);
+text-align:center;
+}
+
+/* BANNIÈRE */
+#banner{
+position:fixed;top:-130px;left:50%;transform:translateX(-50%);
+background:#1C1C1C;border:2px solid #D4A017;border-radius:16px;
+padding:16px 22px;font-size:18px;font-weight:700;color:#D4A017;
+z-index:9999;max-width:92%;text-align:center;
+transition:top 0.3s ease;line-height:1.6;pointer-events:none;
+box-shadow:0 8px 32px rgba(0,0,0,0.95);
+}
+#banner.show{top:20px;}
+
+/* LIVRE */
+#book-ico{
+width:160px;height:160px;background:#1C1C1C;
+border:3px solid #2A2A2A;border-radius:28px;
+display:flex;align-items:center;justify-content:center;
+font-size:68px;transition:box-shadow 0.5s;flex-shrink:0;
+}
+#book-ico.pl{box-shadow:0 0 0 14px rgba(212,160,23,0.25),0 20px 60px rgba(0,0,0,0.6);}
+#book-ttl{font-size:20px;font-weight:900;line-height:1.3;margin-bottom:6px;padding:0 4px;}
+#book-aut{font-size:15px;color:#9A9A94;margin-bottom:2px;}
+#book-info{font-size:13px;color:#9A9A94;}
+
+/* PROGRESSION */
+.pw{width:100%;}
+.ptrack{height:14px;background:#2A2A2A;border-radius:7px;position:relative;}
+.pfill{position:absolute;left:0;top:0;bottom:0;background:#D4A017;border-radius:7px;transition:width 0.5s;}
+.pthumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:28px;height:28px;background:#D4A017;border-radius:50%;box-shadow:0 0 0 4px #0A0A0A;}
+#pinfo{display:flex;justify-content:space-between;margin-top:8px;font-size:14px;color:#9A9A94;font-weight:700;}
+.gold{color:#D4A017;}
+
+/* MICRO */
+#mic-ring{
+width:120px;height:120px;border-radius:50%;
+background:#1C1C1C;border:4px solid #2A2A2A;
+display:flex;align-items:center;justify-content:center;
+font-size:48px;transition:all 0.3s;flex-shrink:0;
+}
+#mic-ring.listening{border-color:#D4A017;animation:micpulse 1.4s infinite;}
+#mic-ring.speaking{border-color:#D4A017;background:#D4A017;}
+@keyframes micpulse{
+0%{box-shadow:0 0 0 0 rgba(212,160,23,0.6);}
+70%{box-shadow:0 0 0 22px rgba(212,160,23,0);}
+100%{box-shadow:0 0 0 0 rgba(212,160,23,0);}
+}
+#mic-label{font-size:15px;font-weight:700;color:#9A9A94;min-height:22px;text-align:center;}
+</style>
+
+</head>
+<body>
+<div id="banner" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<div id="screen-start" role="button" aria-label="Toucher pour démarrer">
+  <div class="ico">🎧</div>
+  <h1>VocaBook</h1>
+  <p>Bibliothèque vocale<br/>tous les livres en français</p>
+  <p class="hint">Poser le doigt n'importe où<br/>pour démarrer</p>
+</div>
+
+<div id="screen-app">
+  <div id="book-ico">🎧</div>
+  <div style="width:100%">
+    <p id="book-ttl">VocaBook</p>
+    <p id="book-aut">Bibliothèque vocale</p>
+    <p id="book-info"></p>
+  </div>
+  <div class="pw">
+    <div class="ptrack">
+      <div class="pfill" id="pfill" style="width:0%"></div>
+      <div class="pthumb" id="pthumb" style="left:0%"></div>
+    </div>
+    <div id="pinfo">
+      <span id="p-el">--</span>
+      <span class="gold" id="p-pct">0%</span>
+      <span id="p-tot">--</span>
+    </div>
+  </div>
+  <div id="mic-ring">🎤</div>
+  <p id="mic-label">Initialisation…</p>
+</div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════
+// API CLAUDE — lit n'importe quel livre en français
+// ══════════════════════════════════════════════════════
+const CLAUDE_MODEL = 'claude-sonnet-4-6';
+
+async function askClaude(systemPrompt, userMessage) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    })
+  });
+  const data = await response.json();
+  return data.content?.[0]?.text || '';
+}
+
+// ══════════════════════════════════════════════════════
+// VOIX
+// ══════════════════════════════════════════════════════
+let speaking    = false;
+let currentRate = 1;
+
+function say(text, onEnd) {
+  const b = document.getElementById('banner');
+  b.textContent = text.length > 75 ? text.slice(0,72)+'…' : text;
+  b.classList.add('show');
+  clearTimeout(say._bt);
+  say._bt = setTimeout(() => b.classList.remove('show'), 7000);
+
+  if (!window.speechSynthesis) { onEnd && onEnd(); return; }
+  window.speechSynthesis.cancel();
+  speaking = false;
+  stopListening();
+  setMicState('speaking');
+
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'fr-FR'; u.rate = currentRate; u.volume = 1;
+    u.onend = () => {
+      speaking = false;
+      setMicState('idle');
+      if (onEnd) onEnd();
+      else startListening();
+    };
+    u.onerror = () => {
+      speaking = false;
+      setMicState('idle');
+      if (onEnd) onEnd();
+      else startListening();
+    };
+    speaking = true;
+    window.speechSynthesis.speak(u);
+
+    clearInterval(say._kp);
+    say._kp = setInterval(() => {
+      if (!speaking) { clearInterval(say._kp); return; }
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    }, 5000);
+  }, 80);
+}
+
+// ══════════════════════════════════════════════════════
+// LECTURE PAR PASSAGES — Claude génère le texte
+// ══════════════════════════════════════════════════════
+let livreActuel  = null;   // { titre, auteur }
+let passageIndex = 0;      // numéro du passage en cours
+let bookPlaying  = false;
+let bookmarks    = [];
+let passágeTexte = '';     // texte du passage en cours
+
+const SYSTEM_LECTURE = `Tu es un assistant de lecture audio pour malvoyants et aveugles.
+Tu connais tous les grands classiques de la littérature française.
+Quand on te demande un passage d'un livre, tu retournes UNIQUEMENT le texte littéral du livre, 
+sans introduction, sans commentaire, sans guillemets, sans numéro de chapitre au début.
+Juste le texte du livre, environ 200 mots, qui se lit naturellement à voix haute.
+Commence directement par le texte du livre.`;
+
+async function lirePassageSuivant() {
+  if (!bookPlaying || !livreActuel) return;
+
+  document.getElementById('book-ico').classList.add('pl');
+  setMicState('speaking');
+
+  try {
+    const texte = await askClaude(
+      SYSTEM_LECTURE,
+      `Livre : "${livreActuel.titre}" de ${livreActuel.auteur}.
+Passage numéro ${passageIndex + 1}.
+${passageIndex === 0 ? 'Commence depuis le tout début du livre.' : `Continue exactement là où le passage ${passageIndex} s'est arrêté.`}
+Donne-moi environ 200 mots du texte original du livre. Juste le texte, rien d'autre.`
+    );
+
+    if (!texte || !bookPlaying) return;
+
+    passágeTexte = texte;
+    majProg();
+
+    const u = new SpeechSynthesisUtterance(texte);
+    u.lang = 'fr-FR'; u.rate = currentRate; u.volume = 1;
+    u.onend = () => {
+      if (bookPlaying) {
+        passageIndex++;
+        majProg();
+        lirePassageSuivant(); // lit le passage suivant automatiquement
+      } else {
+        setMicState('idle');
+        startListening();
+      }
+    };
+    u.onerror = () => {
+      if (bookPlaying) { passageIndex++; lirePassageSuivant(); }
+      else { setMicState('idle'); startListening(); }
+    };
+    window.speechSynthesis.speak(u);
+
+    // iOS keepalive
+    clearInterval(say._kp);
+    say._kp = setInterval(() => {
+      if (!bookPlaying) { clearInterval(say._kp); return; }
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    }, 5000);
+
+  } catch(e) {
+    say('Erreur de connexion. Vérifiez internet.', () => startListening());
+  }
+}
+
+function pauseLecture() {
+  if (!bookPlaying) { say('Déjà en pause. Dites reprendre pour continuer.'); return; }
+  bookPlaying = false;
+  window.speechSynthesis.cancel();
+  document.getElementById('book-ico').classList.remove('pl');
+  setMicState('idle');
+  setTimeout(() => startListening(), 300);
+  say('Pause. Dites reprendre pour continuer.');
+}
+
+function reprendreLecture() {
+  if (!livreActuel) { say('Aucun livre en cours. Dites le titre d\'un livre pour commencer.'); return; }
+  if (bookPlaying) { say('La lecture est déjà en cours.'); return; }
+  bookPlaying = true;
+  say('Reprise.', () => lirePassageSuivant());
+}
+
+function majProg() {
+  // Progression approximative — chaque passage = ~1 minute de lecture
+  const pct = Math.min(99, passageIndex);
+  document.getElementById('pfill').style.width = pct + '%';
+  document.getElementById('pthumb').style.left = pct + '%';
+  document.getElementById('p-pct').textContent = 'Passage ' + (passageIndex + 1);
+  document.getElementById('p-el').textContent  = livreActuel?.titre?.slice(0,15) || '--';
+  document.getElementById('p-tot').textContent = '';
+}
+
+// ══════════════════════════════════════════════════════
+// MICRO CONTINU
+// ══════════════════════════════════════════════════════
+let recog     = null;
+let listening = false;
+
+function initRecog() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { setMicLabel('Micro non disponible'); return false; }
+  recog = new SR();
+  recog.lang = 'fr-FR'; recog.continuous = false;
+  recog.interimResults = false; recog.maxAlternatives = 3;
+
+  recog.onstart = () => { listening=true; setMicState('listening'); setMicLabel('Je vous écoute…'); };
+  recog.onend   = () => {
+    listening = false;
+    if (bookPlaying) return; // lecture en cours, pas d'écoute
+    if (!speaking) setTimeout(() => { if (!speaking && !bookPlaying) startListening(); }, 500);
+  };
+  recog.onerror = (e) => {
+    listening = false;
+    if (e.error==='no-speech'||e.error==='aborted') {
+      if (!speaking && !bookPlaying) setTimeout(() => startListening(), 300);
+      return;
+    }
+    setTimeout(() => { if (!speaking && !bookPlaying) startListening(); }, 1000);
+  };
+  recog.onresult = (e) => {
+    // Si lecture en cours, met en pause pour traiter la commande
+    if (bookPlaying) {
+      window.speechSynthesis.cancel();
+      bookPlaying = false;
+      clearInterval(say._kp);
+    }
+    const cmd = e.results[0][0].transcript.toLowerCase().trim();
+    setMicLabel('« ' + cmd + ' »');
+    handleCommand(cmd);
+  };
+  return true;
+}
+
+function startListening() {
+  if (!recog || speaking || listening || bookPlaying) return;
+  try { recog.start(); }
+  catch(e) { setTimeout(() => { try { recog.start(); } catch(e2){} }, 300); }
+}
+function stopListening() {
+  if (!recog || !listening) return;
+  try { recog.abort(); } catch(e) {}
+  listening = false;
+}
+function setMicState(s) {
+  const r = document.getElementById('mic-ring');
+  r.classList.remove('listening','speaking');
+  if (s==='listening') { r.classList.add('listening'); setMicLabel('Je vous écoute…'); }
+  if (s==='speaking')  { r.classList.add('speaking');  setMicLabel('Lecture en cours…'); }
+  if (s==='idle')      { setMicLabel(''); }
+}
+function setMicLabel(t) { document.getElementById('mic-label').textContent = t; }
+
+// ══════════════════════════════════════════════════════
+// ÉTAT
+// ══════════════════════════════════════════════════════
+let convMode     = 'idle';
+let pendingLivre = null;
+let sleepTO      = null;
+
+const SPEEDS = [0.5,0.75,1,1.25,1.5,1.75,2,2.5,3];
+const SNAMES = {
+  0.5:'moitié de vitesse',0.75:'trois quarts',1:'vitesse normale',
+  1.25:'un peu plus vite',1.5:'une fois et demie',1.75:'presque deux fois',
+  2:'deux fois plus vite',2.5:'deux fois et demie',3:'trois fois plus vite'
+};
+
+// ══════════════════════════════════════════════════════
+// DÉMARRAGE — premier toucher
+// ══════════════════════════════════════════════════════
+document.getElementById('screen-start').addEventListener('click', function() {
+  this.style.display = 'none';
+  document.getElementById('screen-app').style.display = 'flex';
+  initRecog();
+  convMode = 'ask_book';
+  say(
+    'Bienvenue dans VocaBook. ' +
+    'Quel livre voulez-vous écouter ? ' +
+    'Dites le titre ou le nom de l\'auteur. ' +
+    'Par exemple : Les Misérables, Le Petit Prince, Madame Bovary, Jules Verne, ou n\'importe quel livre français.'
+  );
+}, { once: true });
+
+// ══════════════════════════════════════════════════════
+// RECHERCHE ET CONFIRMATION
+// ══════════════════════════════════════════════════════
+const SYSTEM_SEARCH = `Tu es un assistant bibliothèque pour malvoyants.
+Quand on te donne un titre ou un auteur, réponds UNIQUEMENT avec un objet JSON :
+{"titre": "titre exact du livre", "auteur": "prénom nom de l'auteur"}
+Si tu ne connais pas le livre, réponds : {"erreur": "introuvable"}
+Rien d'autre que ce JSON.`;
+
+async function chercherLivre(query) {
+  setMicLabel('Recherche en cours…');
+  try {
+    const result = await askClaude(
+      SYSTEM_SEARCH,
+      `Trouve ce livre ou cet auteur en français : "${query}"`
+    );
+    const json = JSON.parse(result.trim());
+    if (json.erreur) return null;
+    return json;
+  } catch(e) {
+    return null;
+  }
+}
+
+function proposerLivre(livre) {
+  pendingLivre = livre;
+  convMode     = 'confirm_book';
+  document.getElementById('book-ico').textContent = '📖';
+  document.getElementById('book-ico').className   = '';
+  document.getElementById('book-ttl').textContent = livre.titre;
+  document.getElementById('book-aut').textContent = livre.auteur;
+  document.getElementById('book-info').textContent= '';
+  say(
+    `J'ai trouvé : ${livre.titre} par ${livre.auteur}. ` +
+    `Dites oui pour que je vous lise ce livre. ` +
+    `Dites non pour chercher un autre.`
+  );
+}
+
+function demarrerLivre(livre) {
+  livreActuel  = livre;
+  passageIndex = 0;
+  bookmarks    = [];
+  bookPlaying  = false;
+  convMode     = 'idle';
+
+  document.getElementById('book-ico').textContent = '📖';
+  document.getElementById('book-ico').className   = '';
+  document.getElementById('book-ttl').textContent = livre.titre;
+  document.getElementById('book-aut').textContent = livre.auteur;
+  document.getElementById('book-info').textContent= 'Lecture vocale';
+  majProg();
+
+  say(
+    `${livre.titre} par ${livre.auteur}. La lecture commence. ` +
+    `Dites pause pour mettre en pause. ` +
+    `Dites marque-page pour sauvegarder votre position. ` +
+    `Dites où en suis-je pour votre avancement. ` +
+    `Dites aide pour toutes les commandes.`,
+    () => { bookPlaying = true; lirePassageSuivant(); }
+  );
+}
+
+function demanderLivre() {
+  convMode    = 'ask_book';
+  bookPlaying = false;
+  window.speechSynthesis.cancel();
+  document.getElementById('book-ico').textContent = '🎧';
+  document.getElementById('book-ico').className   = '';
+  document.getElementById('book-ttl').textContent = 'Quel livre ?';
+  document.getElementById('book-aut').textContent = '';
+  document.getElementById('book-info').textContent= '';
+  say('Quel livre voulez-vous écouter ? Dites le titre ou le nom de l\'auteur.');
+}
+
+// ══════════════════════════════════════════════════════
+// MARQUE-PAGES
+// ══════════════════════════════════════════════════════
+function ajouterMarque() {
+  if (!livreActuel) { say('Aucun livre en cours.'); return; }
+  const n = bookmarks.length + 1;
+  bookmarks.push({ passage: passageIndex, n });
+  say(`Marque-page ${n} sauvegardé au passage ${passageIndex + 1}.`);
+}
+function listerMarques() {
+  if (!bookmarks.length) { say('Aucun marque-page. Dites marque-page pendant la lecture.'); return; }
+  const liste = bookmarks.map(bm => `Marque-page ${bm.n} au passage ${bm.passage + 1}`).join('. ');
+  say(`${bookmarks.length} marque-page${bookmarks.length>1?'s':''}. ${liste}. Dites reprendre marque-page 1 pour y retourner.`);
+}
+function allerMarque(n) {
+  const bm = bookmarks.find(b => b.n === n);
+  if (!bm) { say(`Marque-page ${n} introuvable.`); return; }
+  passageIndex = bm.passage;
+  majProg();
+  say(`Reprise au marque-page ${n}, passage ${bm.passage + 1}.`,
+    () => { bookPlaying = true; lirePassageSuivant(); });
+}
+
+// ══════════════════════════════════════════════════════
+// COMMANDES VOCALES
+// ══════════════════════════════════════════════════════
+function handleCommand(cmd) {
+
+  // Marque-page numéroté
+  const bmM = cmd.match(/(?:reprendre|aller).*marque[- ]?page\s*(\d+)/);
+  if (bmM) { allerMarque(parseInt(bmM[1])); return; }
+
+  // Confirmation livre
+  if (convMode === 'confirm_book') {
+    if (/^(oui|ok|yes|parfait|bien|super|d.accord|lancer|écouter|démarrer|vas-y|allez)/.test(cmd)) {
+      demarrerLivre(pendingLivre); return;
+    }
+    if (/^(non|pas|autre|différent|changer)/.test(cmd)) {
+      pendingLivre = null; demanderLivre(); return;
+    }
+  }
+
+  // Demande livre — Claude cherche
+  if (convMode === 'ask_book') {
+    if (cmd.length > 2) {
+      chercherLivre(cmd).then(livre => {
+        if (livre) proposerLivre(livre);
+        else say(`Je n'ai pas trouvé "${cmd}". Essayez un autre titre ou auteur.`);
+      });
+      return;
+    }
+  }
+
+  // Commandes universelles
+  if (/nouveau livre|autre livre|changer/.test(cmd))        { demanderLivre(); return; }
+  if (/\bpause\b|^stop$|arrêter|arrête/.test(cmd))          { pauseLecture(); return; }
+  if (/reprendre|continuer/.test(cmd))                      { reprendreLecture(); return; }
+  if (/reculer|recule|en arrière/.test(cmd)) {
+    passageIndex = Math.max(0, passageIndex - 2); majProg();
+    say('Retour en arrière.', () => { bookPlaying=true; lirePassageSuivant(); }); return;
+  }
+  if (/avancer|avance|passer/.test(cmd)) {
+    passageIndex += 2; majProg();
+    say('Avance.', () => { bookPlaying=true; lirePassageSuivant(); }); return;
+  }
+  if (/marque[- ]?page/.test(cmd))              { ajouterMarque(); return; }
+  if (/mes marques|mes pages/.test(cmd))         { listerMarques(); return; }
+  if (/où|position|avancement|passage/.test(cmd)) {
+    if (!livreActuel) { say('Aucun livre en cours.'); return; }
+    say(`Vous êtes au passage ${passageIndex + 1} de ${livreActuel.titre}.`); return;
+  }
+  if (/plus vite|accélérer/.test(cmd)) {
+    const i=SPEEDS.indexOf(currentRate);
+    if(i>=SPEEDS.length-1){say('Vitesse maximale.');return;}
+    currentRate=SPEEDS[i+1]; say(`Vitesse : ${SNAMES[currentRate]}.`); return;
+  }
+  if (/moins vite|ralentir/.test(cmd)) {
+    const i=SPEEDS.indexOf(currentRate);
+    if(i<=0){say('Vitesse minimale.');return;}
+    currentRate=SPEEDS[i-1]; say(`Vitesse : ${SNAMES[currentRate]}.`); return;
+  }
+  if (/vitesse normale/.test(cmd)) { currentRate=1; say('Vitesse normale.'); return; }
+
+  const slM = cmd.match(/arrêt dans (\d+)|(\d+) minutes/);
+  if (slM) {
+    const m = parseInt(slM[1]||slM[2]);
+    if (m>0&&m<=120) {
+      clearTimeout(sleepTO);
+      sleepTO = setTimeout(() => {
+        bookPlaying=false; window.speechSynthesis.cancel();
+        document.getElementById('book-ico').classList.remove('pl');
+        say('Bonne nuit. La lecture s\'est arrêtée.');
+      }, m*60000);
+      say(`Arrêt dans ${m} minutes. Bonne nuit.`); return;
+    }
+  }
+  if (/annuler minuterie/.test(cmd)) { clearTimeout(sleepTO); say('Minuterie annulée.'); return; }
+  if (/aide|commandes|help/.test(cmd)) {
+    say(
+      'Commandes disponibles. ' +
+      'Dites le titre ou l\'auteur pour choisir un livre. ' +
+      'Dites oui pour confirmer, non pour chercher un autre. ' +
+      'Pendant la lecture : pause, reprendre, reculer, avancer, marque-page, mes marque-pages, où en suis-je, plus vite, moins vite. ' +
+      'Dites arrêt dans 30 minutes pour la minuterie. ' +
+      'Dites nouveau livre pour changer.'
+    ); return;
+  }
+
+  // Tentative recherche si pas en lecture
+  if (!bookPlaying && cmd.length > 2) {
+    convMode = 'ask_book';
+    chercherLivre(cmd).then(livre => {
+      if (livre) proposerLivre(livre);
+      else say('Je n\'ai pas compris. Dites aide pour les commandes.');
+    });
+    return;
+  }
+
+  say('Je n\'ai pas compris. Dites aide pour les commandes.');
+}
+</script>
+
+</body>
+</html>
